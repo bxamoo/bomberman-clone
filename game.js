@@ -5,10 +5,54 @@ const TILE = 32;
 const ROWS = 15;
 const COLS = 15;
 
+// ステージデータ（0=空白, 1=壁）
+const stages = [
+    // --- Stage 1 ---
+    [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+        [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1],
+        [1,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+        [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
+        [1,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,1,0,1,0,0,0,0,1],
+        [1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
+        [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ],
+
+    // --- Stage 2 ---
+    [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
+        [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
+        [1,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
+        [1,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+        [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1],
+        [1,0,0,1,0,0,0,1,0,0,0,1,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ]
+];
+
+let currentStage = 0;
+let map = JSON.parse(JSON.stringify(stages[currentStage]));
+
 // プレイヤー
 let player = { x: 1, y: 1 };
 
-// 敵（1体）
+// 敵
 let enemy = { x: 13, y: 13, alive: true };
 
 // 爆弾
@@ -20,20 +64,7 @@ let keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
-// マップ（0=空白, 1=壁）
-let map = [];
-for (let y = 0; y < ROWS; y++) {
-    map[y] = [];
-    for (let x = 0; x < COLS; x++) {
-        if (y === 0 || y === ROWS - 1 || x === 0 || x === COLS - 1) {
-            map[y][x] = 1; // 外周は壁
-        } else {
-            map[y][x] = 0;
-        }
-    }
-}
-
-// 移動できるか判定
+// 移動できるか
 function canMove(x, y) {
     return map[y][x] === 0;
 }
@@ -53,9 +84,9 @@ function updatePlayer() {
         player.y = ny;
     }
 
-    // スペースで爆弾設置
+    // 爆弾設置
     if (keys[" "] && !bomb) {
-        bomb = { x: player.x, y: player.y, timer: 60 }; // 60フレーム後に爆発
+        bomb = { x: player.x, y: player.y, timer: 60 };
     }
 }
 
@@ -88,7 +119,6 @@ function updateBomb() {
     bomb.timer--;
 
     if (bomb.timer <= 0) {
-        // 爆発発生（上下左右に1マス）
         explosions = [
             { x: bomb.x, y: bomb.y },
             { x: bomb.x + 1, y: bomb.y },
@@ -106,8 +136,25 @@ function updateBomb() {
 
         bomb = null;
 
-        // 爆風は30フレームで消える
         setTimeout(() => explosions = [], 300);
+    }
+}
+
+// ステージクリア判定
+function checkStageClear() {
+    if (!enemy.alive) {
+        currentStage++;
+
+        if (currentStage >= stages.length) {
+            alert("全ステージクリア！ おめでとう！");
+            currentStage = 0;
+        }
+
+        map = JSON.parse(JSON.stringify(stages[currentStage]));
+        player = { x: 1, y: 1 };
+        enemy = { x: 13, y: 13, alive: true };
+        bomb = null;
+        explosions = [];
     }
 }
 
@@ -155,6 +202,7 @@ function loop() {
     updatePlayer();
     updateEnemy();
     updateBomb();
+    checkStageClear();
     draw();
     requestAnimationFrame(loop);
 }
