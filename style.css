@@ -34,9 +34,7 @@ body {
     transition: opacity 0.4s ease;
 }
 
-#messageBox.show {
-    opacity: 1;
-}
+#messageBox.show { opacity: 1; }
 
 #messageText {
     background: #222;
@@ -46,11 +44,17 @@ body {
     color: white;
     border: 3px solid white;
     box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    text-align: center;
 }
 
-/* Try Again ボタン */
-#retryButton {
+/* メッセージボタン */
+#messageButtons {
     margin-top: 20px;
+    display: flex;
+    gap: 20px;
+}
+
+#retryButton, #topButton {
     font-size: 28px;
     padding: 10px 30px;
     border-radius: 10px;
@@ -61,7 +65,7 @@ body {
     transition: 0.2s;
 }
 
-#retryButton:hover {
+#retryButton:hover, #topButton:hover {
     background: #666;
     transform: scale(1.05);
 }
@@ -125,31 +129,30 @@ body {
     box-shadow: 0 0 10px rgba(255,255,255,0.7);
 }
 
-.titlePlayer {
-    background: cyan;
-    box-shadow: 0 0 15px rgba(0,255,255,0.8);
-}
+.titlePlayer { background: cyan; box-shadow: 0 0 15px rgba(0,255,255,0.8); }
+.titleEnemy { background: red; box-shadow: 0 0 15px rgba(255,0,0,0.8); }
 
-.titleEnemy {
-    background: red;
-    box-shadow: 0 0 15px rgba(255,0,0,0.8);
-}
-
-/* 黒目 */
-.titlePlayer span, .titleEnemy span {
+/* 白目＋黒目 */
+.eye {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    background: black;
+    width: 20px;
+    height: 20px;
+    background: white;
     border-radius: 50%;
     top: 28px;
 }
+.eye.left { left: 18px; }
+.eye.right { right: 18px; }
 
-.titlePlayer span.left { left: 20px; }
-.titlePlayer span.right { right: 20px; }
-
-.titleEnemy span.left { left: 20px; }
-.titleEnemy span.right { right: 20px; }
+.pupil {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: black;
+    border-radius: 50%;
+    top: 5px;
+    left: 5px;
+}
 
 /* VS テキスト */
 #titleVS {
@@ -160,6 +163,4 @@ body {
 }
 
 /* 汎用 hidden クラス */
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
