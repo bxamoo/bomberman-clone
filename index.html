@@ -7,26 +7,22 @@
 </head>
 <body>
 
-    <!-- タイトル画面 -->
     <div id="titleScreen">
         <div id="titleBox">
             <h1>Bomber Game</h1>
 
-        <!-- ★ タイトル画面のキャラ飾り -->
-        <div id="titleCharacters">
-            <div class="titlePlayer"></div>
-            <div id="titleVS">VS</div>
-            <div class="titleEnemy"></div>
-        </div>
+            <div id="titleCharacters">
+                <div class="titlePlayer"></div>
+                <div id="titleVS">VS</div>
+                <div class="titleEnemy"></div>
+            </div>
 
             <button id="startButton">Start</button>
         </div>
     </div>
 
-    <!-- ゲームキャンバス -->
     <canvas id="gameCanvas" width="480" height="480"></canvas>
 
-    <!-- 勝利・敗北メッセージ -->
     <div id="messageBox" class="hidden">
         <div id="messageText"></div>
         <button id="retryButton">Try Again</button>
