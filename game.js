@@ -78,6 +78,8 @@ document.addEventListener("keyup", e=>{
 });
 
 function handleKeyPress(key){
+    if(gameOver) return; // ← ゲームオーバー時はキー入力無効化
+
     let nx=player.x, ny=player.y;
     if(key==="ArrowUp") ny--;
     if(key==="ArrowDown") ny++;
