@@ -26,6 +26,7 @@ body {
     height: 100%;
     background: rgba(0,0,0,0.6);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 999;
@@ -45,6 +46,24 @@ body {
     color: white;
     border: 3px solid white;
     box-shadow: 0 0 20px rgba(255,255,255,0.5);
+}
+
+/* Try Again ボタン */
+#retryButton {
+    margin-top: 20px;
+    font-size: 28px;
+    padding: 10px 30px;
+    border-radius: 10px;
+    border: 2px solid white;
+    background: #444;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#retryButton:hover {
+    background: #666;
+    transform: scale(1.05);
 }
 
 /* タイトル画面 */
