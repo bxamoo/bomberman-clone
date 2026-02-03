@@ -13,13 +13,13 @@ body {
     background: #222;
     font-family: sans-serif;
     color: #fff;
+    position: relative;
 }
 
 /* キャンバス */
 canvas {
     background: #333;
     display: block;
-    margin-bottom: 20px;
 }
 
 /* 中央ボタン */
