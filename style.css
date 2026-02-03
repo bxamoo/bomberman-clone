@@ -49,7 +49,7 @@ body {
 /* くりくり目 */
 .eyes {
   position: absolute;
-  top: 24px;
+  top: 40px;
   left: 12px;
   display: flex;
   gap: 18px;
