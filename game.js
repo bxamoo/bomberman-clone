@@ -250,8 +250,8 @@ loop();
 startButton.onclick = () => {
     startButton.classList.add("hidden");
     messageBox.classList.add("hidden");
-    messageBox.classList.remove("show");
     gameStarted = true;
+    gamePaused = false;
     resetStage();
 };
 
