@@ -1,96 +1,69 @@
-/* 全体レイアウト */
 body {
     margin: 0;
     background: #111;
     color: #fff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    position: relative;
 }
 
-/* キャンバス */
+/* ===== UIレイヤー ===== */
+#uiLayer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    pointer-events: none;
+}
+
+#startButton {
+    font-size: 32px;
+    padding: 15px 40px;
+    border-radius: 10px;
+    border: 2px solid white;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#startButton.hidden {
+    display: none;
+}
+
+/* ===== Canvas ===== */
 #gameCanvas {
     background: #222;
     border: 4px solid #555;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    z-index: 1;
 }
 
-/* START / Try Again ボタン */
-#startButton, #retryButton {
-    position: absolute;
-    font-size: 28px;
-    padding: 10px 30px;
-    border-radius: 10px;
-    border: 2px solid white;
-    background: #444;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-#startButton:hover, #retryButton:hover {
-    background: #666;
-    transform: scale(1.05);
-}
-
-/* START ボタン位置 */
-#startButton {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* メッセージボックス */
+/* ===== Win/Lose ===== */
 #messageBox {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 999;
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    z-index: 200;
 }
 
-#messageBox.show {
-    opacity: 1;
+#messageBox.hidden {
+    display: none;
 }
 
 #messageText {
-    background: #222;
-    padding: 30px 50px;
-    border-radius: 12px;
     font-size: 48px;
-    color: white;
-    border: 3px solid white;
-    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    margin-bottom: 20px;
 }
 
-/* Try Again ボタン位置 */
 #retryButton {
-    margin-top: 20px;
-}
-
-#startButton {
-    position: absolute;
-    z-index: 10;
-}
-
-#gameCanvas {
-    position: relative;
-    z-index: 1;
-}
-
-
-/* hidden クラス */
-.hidden {
-    display: none;
+    font-size: 28px;
+    padding: 10px 30px;
 }
