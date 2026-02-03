@@ -116,25 +116,27 @@ let enemy = { x: 13, y: 13, alive: true };
 let bomb = null;
 let explosions = [];
 
-// キー入力
-let keys = {};
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+// キー押しっぱなし防止
+let keyPressed = {};
+document.addEventListener("keydown", e => {
+    if (!keyPressed[e.key]) {
+        keyPressed[e.key] = true;
+        handleKeyPress(e.key);
+    }
+});
+document.addEventListener("keyup", e => {
+    keyPressed[e.key] = false;
+});
 
-// 移動できるか
-function canMove(x, y) {
-    return map[y][x] === 0;
-}
-
-// プレイヤー移動
-function updatePlayer() {
+// 1マス移動処理
+function handleKeyPress(key) {
     let nx = player.x;
     let ny = player.y;
 
-    if (keys["ArrowUp"]) ny--;
-    if (keys["ArrowDown"]) ny++;
-    if (keys["ArrowLeft"]) nx--;
-    if (keys["ArrowRight"]) nx++;
+    if (key === "ArrowUp") ny--;
+    if (key === "ArrowDown") ny++;
+    if (key === "ArrowLeft") nx--;
+    if (key === "ArrowRight") nx++;
 
     if (canMove(nx, ny)) {
         player.x = nx;
@@ -142,9 +144,14 @@ function updatePlayer() {
     }
 
     // 爆弾設置
-    if (keys[" "] && !bomb) {
+    if (key === " " && !bomb) {
         bomb = { x: player.x, y: player.y, timer: 60 };
     }
+}
+
+// 移動できるか
+function canMove(x, y) {
+    return map[y][x] === 0;
 }
 
 // 敵のランダム移動
@@ -184,10 +191,10 @@ function updateBomb() {
             { x: bomb.x, y: bomb.y - 1 }
         ];
 
-        // 壁破壊処理
+        // 壊せる壁を破壊
         for (let e of explosions) {
             if (map[e.y] && map[e.y][e.x] === 2) {
-                map[e.y][e.x] = 0; // 壊せる壁を破壊
+                map[e.y][e.x] = 0;
             }
         }
 
@@ -268,7 +275,6 @@ function draw() {
 
 // メインループ
 function loop() {
-    updatePlayer();
     updateEnemy();
     updateBomb();
     checkStageClear();
