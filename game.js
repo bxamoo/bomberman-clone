@@ -361,10 +361,21 @@ function enemyChasePlayer() {
 }
 
 /* ============================================================
-   敵 AI：総合
+   敵 AI：クールダウン付き総合行動
    ============================================================ */
+let enemyCooldown = 0;
+
 function updateEnemy() {
     if (!enemy.alive) return;
+
+    // クールダウン中は動かない
+    if (enemyCooldown > 0) {
+        enemyCooldown--;
+        return;
+    }
+
+    // 行動後のクールダウン（自然な動きに）
+    enemyCooldown = 18 + Math.floor(Math.random() * 10);
 
     if (enemyAvoidExplosion()) return;
 
@@ -517,4 +528,21 @@ function draw() {
 
         ctx.fillStyle = "black";
         ctx.beginPath();
-        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2
+        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+/* ============================================================
+   メインループ
+   ============================================================ */
+function loop() {
+    updateEnemy();
+    updateBomb();
+    checkStageClear();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
