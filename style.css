@@ -107,6 +107,41 @@ body {
     transform: scale(1.05);
 }
 
+/* タイトル画面のキャラ飾り */
+#titleCharacters {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+/* 青いプレイヤー丸 */
+.titlePlayer {
+    width: 80px;
+    height: 80px;
+    background: cyan;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0,255,255,0.7);
+}
+
+/* 赤い敵丸 */
+.titleEnemy {
+    width: 80px;
+    height: 80px;
+    background: red;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255,0,0,0.7);
+}
+
+/* VS テキスト */
+#titleVS {
+    font-size: 48px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 10px rgba(255,255,255,0.6);
+}
+
 /* 汎用 hidden クラス */
 .hidden {
     display: none;
