@@ -56,8 +56,8 @@ body {
 }
 
 .eyes span {
-  width: 20px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
   background: white;
   border-radius: 50%;
   position: relative;
@@ -66,10 +66,10 @@ body {
 .eyes span::after {
   content: "";
   position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 10px;
-  height: 10px;
+  top: 15px;
+  left: 15px;
+  width: 15px;
+  height: 15px;
   background: black;
   border-radius: 50%;
 }
