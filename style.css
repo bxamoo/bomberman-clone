@@ -9,12 +9,14 @@ body {
     height: 100vh;
 }
 
+/* Canvas */
 #gameCanvas {
     background: #222;
     border: 4px solid #555;
     box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
 
+/* メッセージ */
 #messageBox {
     position: fixed;
     inset: 0;
@@ -54,6 +56,7 @@ body {
     transform: scale(1.05);
 }
 
+/* タイトル画面 */
 #titleScreen {
     position: fixed;
     inset: 0;
@@ -80,21 +83,56 @@ body {
     color: white;
 }
 
+/* タイトルキャラ */
 #titleCharacters {
     display: flex;
     gap: 40px;
     margin-bottom: 30px;
+    align-items: center;
 }
 
-.titlePlayer, .titleEnemy {
+.titlePlayer,
+.titleEnemy {
     width: 80px;
     height: 80px;
     border-radius: 50%;
+    position: relative;
 }
 
 .titlePlayer { background: cyan; }
 .titleEnemy { background: red; }
 
-#titleVS { font-size: 48px; }
+#titleVS {
+    font-size: 48px;
+    font-weight: bold;
+}
+
+/* 目 */
+.eyes {
+    position: absolute;
+    top: 28px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.eyes span {
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    position: relative;
+}
+
+.eyes span::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 5px;
+    height: 5px;
+    background: black;
+    border-radius: 50%;
+}
 
 .hidden { display: none; }
