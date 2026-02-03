@@ -11,23 +11,27 @@ let gamePaused = false;
 document.getElementById("startButton").addEventListener("click", () => {
     document.getElementById("titleScreen").style.display = "none";
     gameStarted = true;
-    gamePaused = false;
     loop();
 });
 
-/* ================== ステージ生成 ================== */
+document.getElementById("topButton").addEventListener("click", () => {
+    document.getElementById("messageBox").classList.add("hidden");
+    document.getElementById("titleScreen").style.display = "flex";
+    gamePaused = false;
+    gameStarted = false;
+});
+
+/* ================= ステージ生成 ================= */
 function generateStage(pattern5x5) {
     const stage = [];
     for (let y = 0; y < ROWS; y++) {
         stage[y] = [];
         for (let x = 0; x < COLS; x++) {
-            if (y === 0 || y === ROWS-1 || x === 0 || x === COLS-1) { stage[y][x]=1; continue; }
-            if (y%2===0 && x%2===0) { stage[y][x]=1; continue; }
-
-            const py = Math.floor(y/3);
-            const px = Math.floor(x/3);
-            const v = pattern5x5[py][px];
-            stage[y][x] = (v===2 ? 2 : 0);
+            if (y===0||y===ROWS-1||x===0||x===COLS-1 || (y%2===0 && x%2===0)) stage[y][x]=1;
+            else {
+                const py=Math.floor(y/3), px=Math.floor(x/3);
+                stage[y][x]=(pattern5x5[py][px]===2?2:0);
+            }
         }
     }
     stage[1][1]=stage[1][2]=stage[2][1]=0;
@@ -36,10 +40,14 @@ function generateStage(pattern5x5) {
 }
 
 const stages = [
-    generateStage([[3,3,3,3,3],[3,2,0,2,3],[3,0,2,0,3],[3,2,0,2,3],[3,3,3,3,3]])
+    generateStage([[3,3,3,3,3],[3,2,0,2,3],[3,0,2,0,3],[3,2,0,2,3],[3,3,3,3,3]]),
+    generateStage([[3,2,0,2,3],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[3,2,0,2,3]]),
+    generateStage([[3,0,2,0,3],[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0],[3,0,2,0,3]]),
+    generateStage([[3,2,2,2,3],[2,0,0,0,2],[2,0,2,0,2],[2,0,0,0,2],[3,2,2,2,3]]),
+    generateStage([[3,0,0,0,3],[0,2,2,2,0],[0,2,0,2,0],[0,2,2,2,0],[3,0,0,0,3]])
 ];
 
-let currentStage=0;
+let currentStage = 0;
 let map = JSON.parse(JSON.stringify(stages[currentStage]));
 
 let player = { x:1, y:1 };
@@ -48,73 +56,31 @@ let enemy = { x:13, y:13, alive:true };
 let bombs = [];
 let explosions = [];
 
-/* ================== メッセージ ================== */
-function showMessage(text, callback) {
-    const box = document.getElementById("messageBox");
-    const msg = document.getElementById("messageText");
-    const retry = document.getElementById("retryButton");
-    let topBtn = document.getElementById("topButton");
-
-    if(!topBtn){
-        topBtn = document.createElement("button");
-        topBtn.id = "topButton";
-        topBtn.textContent = "Top";
-        topBtn.style.marginTop = "20px";
-        topBtn.style.fontSize = "28px";
-        topBtn.style.padding = "10px 30px";
-        topBtn.style.borderRadius = "10px";
-        topBtn.style.border = "2px solid white";
-        topBtn.style.background = "#444";
-        topBtn.style.color = "white";
-        topBtn.style.cursor = "pointer";
-        box.appendChild(topBtn);
-    }
-
-    msg.textContent = text;
+/* ================= メッセージ ================= */
+function showMessage(text, callback){
+    const box=document.getElementById("messageBox");
+    const msg=document.getElementById("messageText");
+    msg.textContent=text;
     box.classList.remove("hidden");
-    gamePaused = true;
+    box.classList.add("show");
+    gamePaused=true;
 
-    setTimeout(()=>box.classList.add("show"), 10);
-
-    function close() {
+    function close(){ 
         box.classList.remove("show");
-        setTimeout(()=>{
-            box.classList.add("hidden");
-            retry.removeEventListener("click", close);
-            topBtn.removeEventListener("click", toTop);
-            callback();
-            gamePaused=false;
-            loop();
-        },300);
+        setTimeout(()=>{ box.classList.add("hidden"); callback(); gamePaused=false; loop(); },300);
     }
 
-    function toTop() {
-        box.classList.remove("show");
-        setTimeout(()=>{
-            box.classList.add("hidden");
-            retry.removeEventListener("click", close);
-            topBtn.removeEventListener("click", toTop);
-            resetStage();
-            gamePaused=false;
-            gameStarted=false;
-            document.getElementById("titleScreen").style.display="flex";
-        },300);
-    }
-
-    retry.addEventListener("click", close);
-    topBtn.addEventListener("click", toTop);
+    const retry=document.getElementById("retryButton");
+    retry.onclick=close;
 }
 
-/* ================== キー入力 ================== */
-let keyPressed = {};
-document.addEventListener("keydown", e => {
+/* ================= キー入力 ================= */
+let keyPressed={};
+document.addEventListener("keydown", e=>{
     if(!gameStarted || gamePaused) return;
-    if(!keyPressed[e.key]){
-        keyPressed[e.key]=true;
-        handleKeyPress(e.key);
-    }
+    if(!keyPressed[e.key]) { keyPressed[e.key]=true; handleKeyPress(e.key); }
 });
-document.addEventListener("keyup", e => keyPressed[e.key]=false);
+document.addEventListener("keyup", e=>{ keyPressed[e.key]=false; });
 
 function handleKeyPress(key){
     let nx=player.x, ny=player.y;
@@ -123,60 +89,54 @@ function handleKeyPress(key){
     if(key==="ArrowLeft") nx--;
     if(key==="ArrowRight") nx++;
     if(canMove(nx,ny)) { player.x=nx; player.y=ny; }
-
-    if(key===" " && !bombs.find(b=>b.owner==="player")){
-        bombs.push({x:player.x, y:player.y, timer:120, owner:"player"});
-    }
+    if(key===" " && !bombs.find(b=>b.owner==="player")) bombs.push({x:player.x,y:player.y,timer:120,owner:"player"});
 }
 
-/* ================== 移動判定 ================== */
 function canMove(x,y){ return map[y] && map[y][x]===0; }
 
-/* ================== 爆風範囲 ================== */
+/* ================= 爆風 ================= */
 function getExplosionTiles(b){
     if(!b) return [];
     let tiles=[{x:b.x,y:b.y}];
-    const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-    for(let d of dirs){
-        for(let i=1;i<=2;i++){
-            let nx=b.x+d.x*i, ny=b.y+d.y*i;
-            if(!map[ny]||map[ny][nx]===undefined) break;
-            tiles.push({x:nx,y:ny});
-            if(map[ny][nx]===1) break;
-        }
+    let dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+    for(let d of dirs) for(let i=1;i<=2;i++){
+        let nx=b.x+d.x*i, ny=b.y+d.y*i;
+        if(!map[ny]||map[ny][nx]===undefined) break;
+        tiles.push({x:nx,y:ny});
+        if(map[ny][nx]===1) break;
     }
     return tiles;
 }
 
 function getDangerTiles(){
-    const set=new Set();
+    let set=new Set();
     bombs.forEach(b=>getExplosionTiles(b).forEach(t=>set.add(`${t.x},${t.y}`)));
     return set;
 }
 
-/* ================== 爆弾処理 ================== */
 function updateBombs(){
     for(let i=bombs.length-1;i>=0;i--){
         let b=bombs[i];
         b.timer--;
         if(b.timer<=0){
             let tiles=getExplosionTiles(b);
-            explosions.push({tiles,timer:60});
-            tiles.forEach(e=>{ if(map[e.y]&&map[e.y][e.x]===2) map[e.y][e.x]=0; });
-
-            tiles.forEach(e=>{ if(player.x===e.x&&player.y===e.y) showMessage("You Lose…",()=>resetStage()); });
-            tiles.forEach(e=>{ if(enemy.x===e.x&&enemy.y===e.y) enemy.alive=false; });
-
+            explosions.push({tiles,timer:60,scale:1,dir:1});
+            tiles.forEach(e=>{ if(map[e.y][e.x]===2) map[e.y][e.x]=0; });
+            tiles.forEach(e=>{ if(player.x===e.x && player.y===e.y) showMessage("You Lose…",()=>resetStage()); });
+            tiles.forEach(e=>{ if(enemy.x===e.x && enemy.y===e.y) enemy.alive=false; });
             bombs.splice(i,1);
         }
     }
+
     for(let i=explosions.length-1;i>=0;i--){
-        explosions[i].timer--;
-        if(explosions[i].timer<=0) explosions.splice(i,1);
+        let ex=explosions[i];
+        ex.timer--;
+        ex.scale+=0.05*ex.dir;
+        if(ex.scale>1.5 || ex.scale<0.8) ex.dir*=-1;
+        if(ex.timer<=0) explosions.splice(i,1);
     }
 }
 
-/* ================== ステージリセット ================== */
 function resetStage(){
     map=JSON.parse(JSON.stringify(stages[currentStage]));
     player={x:1,y:1};
@@ -186,21 +146,20 @@ function resetStage(){
     enemyCooldown=0;
 }
 
-/* ================== ステージクリア判定 ================== */
 function checkStageClear(){
     if(!enemy.alive){
         showMessage("You Win!",()=>{
             let prev=currentStage;
-            do{ currentStage=Math.floor(Math.random()*stages.length);} while(currentStage===prev);
+            do{ currentStage=Math.floor(Math.random()*stages.length); }while(currentStage===prev);
             resetStage();
         });
     }
 }
 
-/* ================== 敵AI ================== */
+/* ================= CPU AI ================= */
 let enemyCooldown=0;
 function enemyAI(){
-    if(!enemy.alive||gamePaused) return;
+    if(!enemy.alive || gamePaused) return;
     if(enemyCooldown>0){ enemyCooldown--; return; }
     enemyCooldown=12+Math.floor(Math.random()*6);
 
@@ -208,40 +167,37 @@ function enemyAI(){
     const ek=`${enemy.x},${enemy.y}`;
     const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
 
-    // 爆風回避を最優先
     if(danger.has(ek)){
-        let safeMoves=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-            .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-        if(safeMoves.length>0){
-            let move=safeMoves[Math.floor(Math.random()*safeMoves.length)];
-            enemy.x=move.x; enemy.y=move.y; 
-            return;
-        }
-        // どうしても安全がない場合は動かさない
+        let safeMoves=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y})).filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
+        if(safeMoves.length>0){ let move=safeMoves[Math.floor(Math.random()*safeMoves.length)]; enemy.x=move.x; enemy.y=move.y; return; }
+    }
+
+    // プレイヤーに近い壊せるブロックに爆弾
+    let breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y})).filter(p=>map[p.y]&&map[p.y][p.x]===2);
+    if(breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
+        bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
         return;
     }
 
-    // 壊せる壁より安全移動を優先
-    let safeDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-        .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-    if(safeDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
-        // 壊せる壁が近くにあれば置くが、安全移動を優先
-        const breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-            .filter(p=>map[p.y]&&map[p.x]===2);
-        if(breakableDirs.length>0){
-            bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
-        }
-        let move=safeDirs[Math.floor(Math.random()*safeDirs.length)];
-        enemy.x=move.x; enemy.y=move.y;
-        return;
+    // プレイヤー追跡
+    let dx=player.x-enemy.x, dy=player.y-enemy.y;
+    let moves=dirs.slice().sort((a,b)=>Math.abs(dx-(enemy.x+a.x))+Math.abs(dy-(enemy.y+a.y)) - (Math.abs(dx-(enemy.x+b.x))+Math.abs(dy-(enemy.y+b.y))));
+    for(let d of moves){
+        let nx=enemy.x+d.x, ny=enemy.y+d.y;
+        if(canMove(nx,ny)&&!danger.has(`${nx},${ny}`)){ enemy.x=nx; enemy.y=ny; return; }
+    }
+
+    dirs.sort(()=>Math.random()-0.5);
+    for(let d of dirs){
+        let nx=enemy.x+d.x, ny=enemy.y+d.y;
+        if(canMove(nx,ny)&&!danger.has(`${nx},${ny}`)){ enemy.x=nx; enemy.y=ny; break; }
     }
 }
 
-/* ================== 描画 ================== */
+/* ================= 描画 ================= */
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // マップ
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
             if(map[y][x]===1){ ctx.fillStyle="#666"; ctx.fillRect(x*TILE,y*TILE,TILE,TILE); ctx.strokeStyle="#999"; ctx.strokeRect(x*TILE,y*TILE,TILE,TILE);}
@@ -249,81 +205,45 @@ function draw(){
         }
     }
 
-    // 爆弾
     bombs.forEach(b=>{
-        const cx=b.x*TILE+TILE/2, cy=b.y*TILE+TILE/2;
+        let cx=b.x*TILE+TILE/2, cy=b.y*TILE+TILE/2;
         ctx.fillStyle="orange";
         ctx.beginPath();
-        ctx.arc(cx,cy,12,0,Math.PI*2);
-        ctx.fill();
+        ctx.arc(cx,cy,12,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle="yellow"; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(cx-8,cy-8); ctx.lineTo(cx+8,cy+8); ctx.stroke();
     });
 
-    // 爆発
+    // 爆風
     explosions.forEach(ex=>{
-        ctx.fillStyle="yellow";
-        ex.tiles.forEach(t=>ctx.fillRect(t.x*TILE,t.y*TILE,TILE,TILE));
+        ex.tiles.forEach(t=>{
+            let cx=t.x*TILE+TILE/2, cy=t.y*TILE+TILE/2;
+            let gradient=ctx.createRadialGradient(cx,cy,2,cx,cy,TILE*ex.scale);
+            gradient.addColorStop(0,"yellow");
+            gradient.addColorStop(0.5,"orange");
+            gradient.addColorStop(1,"rgba(255,100,0,0)");
+            ctx.fillStyle=gradient;
+            ctx.beginPath();
+            ctx.arc(cx,cy,TILE*ex.scale,0,Math.PI*2);
+            ctx.fill();
+        });
     });
 
-    // キャラクター
-    drawCharacter(player.x*TILE, player.y*TILE, "cyan");
-    if(enemy.alive) drawCharacter(enemy.x*TILE, enemy.y*TILE, "red");
+    drawCharacter(player.x,player.y,"cyan");
+    if(enemy.alive) drawCharacter(enemy.x,enemy.y,"red");
 }
 
-/* ================== ぷよ目キャラクター ================== */
-function drawCharacter(px, py, color){
-    const r = TILE/2-2;
-    const cx = px+TILE/2;
-    const cy = py+TILE/2;
+/* キャラクター（ぷよ目） */
+function drawCharacter(x,y,color){
+    const cx=x*TILE+TILE/2, cy=y*TILE+TILE/2;
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2); ctx.fill();
 
-    // 本体
-    ctx.fillStyle=color;
-    ctx.beginPath();
-    ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.fill();
-
-    // 目（ぷよぷよ風）
-    const eyeOffsetX = 6;
-    const eyeOffsetY = -4;
-    const whiteR = 6;
-    const blackR = 3;
-    const shineR = 1.5;
-
-    // 白目
-    ctx.fillStyle="white";
-    ctx.beginPath();
-    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,whiteR,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,whiteR,0,Math.PI*2);
-    ctx.fill();
-
-    // 黒目
-    ctx.fillStyle="black";
-    ctx.beginPath();
-    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,blackR,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,blackR,0,Math.PI*2);
-    ctx.fill();
-
-    // ハイライト
-    ctx.fillStyle="white";
-    ctx.beginPath();
-    ctx.arc(cx-eyeOffsetX-1,cy+eyeOffsetY-1,shineR,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx+eyeOffsetX-1,cy+eyeOffsetY-1,shineR,0,Math.PI*2);
-    ctx.fill();
+    // ぷよ目
+    const eyeOffsets=[{x:-5,y:-4},{x:5,y:-4}];
+    eyeOffsets.forEach(off=>{
+        ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(cx+off.x,cy+off.y,5,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="black"; ctx.beginPath(); ctx.arc(cx+off.x,cy+off.y,2.5,0,Math.PI*2); ctx.fill();
+    });
 }
 
-/* ================== ループ ================== */
-function loop(){
-    if(!gameStarted) return;
-    if(!gamePaused){
-        updateBombs();
-        enemyAI();
-        checkStageClear();
-        draw();
-    }
-    requestAnimationFrame(loop);
-}
+/* ================= メインループ
