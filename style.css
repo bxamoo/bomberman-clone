@@ -1,100 +1,94 @@
-body {
+/* リセット */
+* {
     margin: 0;
-    background: #111;
-    color: #fff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    background: #222;
+    font-family: sans-serif;
+    color: #fff;
 }
 
-#gameCanvas {
-    background: #222;
-    border: 4px solid #555;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+/* キャンバス */
+canvas {
+    background: #333;
+    display: block;
+    margin-bottom: 20px;
+}
+
+/* 中央ボタン */
+.centerButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 24px;
+    font-size: 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    background-color: #4CAF50;
+    color: white;
+    transition: 0.2s;
+    z-index: 10;
+}
+.centerButton:hover {
+    background-color: #45a049;
 }
 
 /* メッセージボックス */
 #messageBox {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: absolute;
+    top: 0; left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.6);
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 999;
+    background: rgba(0,0,0,0.7);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 20;
 }
 
-#messageBox.show { opacity: 1; }
-
-#messageText {
-    background: #222;
-    padding: 30px 50px;
-    border-radius: 12px;
-    font-size: 48px;
-    color: white;
-    border: 3px solid white;
-    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+#messageBox.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
-#messageButtons {
-    margin-top: 20px;
+#messageBox .hidden {
+    display: none;
 }
 
-#retryButton, #topButton {
-    font-size: 28px;
-    padding: 10px 30px;
-    border-radius: 10px;
-    border: 2px solid white;
+#messageContent {
     background: #444;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s;
-    margin: 0 10px;
-}
-
-#retryButton:hover, #topButton:hover {
-    background: #666;
-    transform: scale(1.05);
-}
-
-/* タイトル画面 */
-#titleScreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-#titleBox { text-align: center; color: white; }
-#titleBox h1 { font-size: 64px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(255,255,255,0.6); }
-
-#startButton {
-    font-size: 32px;
-    padding: 15px 40px;
+    padding: 20px 40px;
     border-radius: 10px;
-    border: 2px solid white;
-    background: #333;
-    color: white;
+    text-align: center;
+}
+
+#messageContent p {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+#messageContent button {
+    padding: 8px 16px;
+    font-size: 18px;
     cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background-color: #f39c12;
+    color: white;
     transition: 0.2s;
 }
-#startButton:hover { background: #555; transform: scale(1.05); }
-
-#titleCharacters { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 30px; }
-
-/* hidden クラス */
-.hidden { display: none; }
+#messageContent button:hover {
+    background-color: #e67e22;
+}
