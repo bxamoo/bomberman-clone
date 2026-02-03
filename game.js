@@ -1,3 +1,5 @@
+
+```javascript
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -453,4 +455,152 @@ function updateBomb() {
 
         bomb = null;
 
-        setTimeout(() =>
+        setTimeout(() => explosions = [], 300);
+    }
+}
+
+/* ============================================================
+   ステージリセット
+   ============================================================ */
+function resetStage() {
+    map = JSON.parse(JSON.stringify(stages[currentStage]));
+    player = { x: 1, y: 1 };
+    enemy = { x: 13, y: 13, alive: true };
+    bomb = null;
+    explosions = [];
+    enemyCooldown = 0;
+}
+
+/* ============================================================
+   ステージクリア（勝利演出付き）
+   ============================================================ */
+function checkStageClear() {
+    if (!enemy.alive) {
+        showMessage("You Win!", () => {
+            let prev = currentStage;
+            do {
+                currentStage = Math.floor(Math.random() * stages.length);
+            } while (currentStage === prev);
+
+            resetStage();
+        });
+    }
+}
+
+/* ============================================================
+   描画
+   ============================================================ */
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (map[y][x] === 1) {
+                ctx.fillStyle = "#666";
+                ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+                ctx.strokeStyle = "#999";
+                ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
+            }
+            if (map[y][x] === 2) {
+                ctx.fillStyle = "#A66";
+                ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+                ctx.strokeStyle = "#D99";
+                ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
+            }
+        }
+    }
+
+    if (bomb) {
+        let cx = bomb.x * TILE + 16;
+        let cy = bomb.y * TILE + 16;
+
+        ctx.fillStyle = "black";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "orange";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx + 8, cy - 8);
+        ctx.lineTo(cx + 14, cy - 14);
+        ctx.stroke();
+    }
+
+    for (let e of explosions) {
+        let cx = e.x * TILE + 16;
+        let cy = e.y * TILE + 16;
+
+        let gradient = ctx.createRadialGradient(cx, cy, 5, cx, cy, 20);
+        gradient.addColorStop(0, "yellow");
+        gradient.addColorStop(1, "orange");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    {
+        let cx = player.x * TILE + 16;
+        let cy = player.y * TILE + 16;
+
+        ctx.fillStyle = "cyan";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "black";
+        ctx.beginPath();
+        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    if
+    {
+        let cx = player.x * TILE + 16;
+        let cy = player.y * TILE + 16;
+
+        ctx.fillStyle = "cyan";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "black";
+        ctx.beginPath();
+        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // ★ ここからが欠けていた部分：敵の描画＋関数の締め
+    if (enemy.alive) {
+        let cx = enemy.x * TILE + 16;
+        let cy = enemy.y * TILE + 16;
+
+        ctx.fillStyle = "red";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "black";
+        ctx.beginPath();
+        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+} // ← draw() の終わり
+
+/* ============================================================
+   メインループ
+   ============================================================ */
+function loop() {
+    if (!gameStarted || gamePaused) return;
+
+    updateEnemy();
+    updateBomb();
+    checkStageClear();
+    draw();
+    requestAnimationFrame(loop);
+}
