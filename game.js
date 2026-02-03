@@ -9,6 +9,7 @@ const COLS = 15;
    ゲーム開始フラグ（タイトル画面からスタート）
    ============================================================ */
 let gameStarted = false;
+let gamePaused = false;
 
 document.getElementById("startButton").addEventListener("click", () => {
     document.getElementById("titleScreen").style.display = "none";
@@ -26,40 +27,26 @@ function generateStage(pattern5x5) {
         stage[y] = [];
         for (let x = 0; x < COLS; x++) {
 
-            // 外周は固い壁
             if (y === 0 || y === ROWS - 1 || x === 0 || x === COLS - 1) {
                 stage[y][x] = 1;
                 continue;
             }
 
-            // 固い壁（偶数行 × 偶数列）
             if (y % 2 === 0 && x % 2 === 0) {
                 stage[y][x] = 1;
                 continue;
             }
 
-            // 壊せる壁パターンを 5×5 → 15×15 に拡大
             const py = Math.floor(y / 3);
             const px = Math.floor(x / 3);
             const v = pattern5x5[py][px];
 
-            if (v === 2) {
-                stage[y][x] = 2; // 壊せる壁
-            } else {
-                stage[y][x] = 0; // 空白
-            }
+            stage[y][x] = (v === 2 ? 2 : 0);
         }
     }
 
-    // プレイヤー初期位置は空白
-    stage[1][1] = 0;
-    stage[1][2] = 0;
-    stage[2][1] = 0;
-
-    // 敵初期位置も空白
-    stage[13][13] = 0;
-    stage[13][12] = 0;
-    stage[12][13] = 0;
+    stage[1][1] = stage[1][2] = stage[2][1] = 0;
+    stage[13][13] = stage[13][12] = stage[12][13] = 0;
 
     return stage;
 }
@@ -123,9 +110,12 @@ let explosions = [];
 function showMessage(text, callback) {
     const box = document.getElementById("messageBox");
     const msg = document.getElementById("messageText");
+    const retry = document.getElementById("retryButton");
 
     msg.textContent = text;
     box.classList.remove("hidden");
+
+    gamePaused = true;
 
     setTimeout(() => {
         box.classList.add("show");
@@ -135,14 +125,14 @@ function showMessage(text, callback) {
         box.classList.remove("show");
         setTimeout(() => {
             box.classList.add("hidden");
-            window.removeEventListener("keydown", close);
-            window.removeEventListener("click", close);
+            retry.removeEventListener("click", close);
             callback();
+            gamePaused = false;
+            loop();
         }, 300);
     }
 
-    window.addEventListener("keydown", close);
-    window.addEventListener("click", close);
+    retry.addEventListener("click", close);
 }
 
 /* ============================================================
@@ -150,7 +140,7 @@ function showMessage(text, callback) {
    ============================================================ */
 let keyPressed = {};
 document.addEventListener("keydown", e => {
-    if (!gameStarted) return; // タイトル中は無効
+    if (!gameStarted || gamePaused) return;
 
     if (!keyPressed[e.key]) {
         keyPressed[e.key] = true;
@@ -276,7 +266,7 @@ function getExplosionTiles(b) {
             let ny = b.y + d.y * i;
             if (!map[ny] || map[ny][nx] === undefined) break;
             tiles.push({ x: nx, y: ny });
-            if (map[ny][nx] === 1) break; // 固い壁で止まる
+            if (map[ny][nx] === 1) break;
         }
     }
 
@@ -342,7 +332,7 @@ function enemyTryPlaceBomb() {
 
     if (dx + dy <= 3) {
         bomb = { x: enemy.x, y: enemy.y, timer: 60, owner: "enemy" };
-        enemyCooldown = 0; // すぐ逃げる
+        enemyCooldown = 0;
         return;
     }
 
@@ -364,7 +354,7 @@ function enemyTryPlaceBomb() {
             let ny = enemy.y + d.y;
             if (map[ny] && map[ny][nx] === 2) {
                 bomb = { x: enemy.x, y: enemy.y, timer: 60, owner: "enemy" };
-                enemyCooldown = 0; // すぐ逃げる
+                enemyCooldown = 0;
                 return;
             }
         }
@@ -412,7 +402,7 @@ function enemyChasePlayer() {
 let enemyCooldown = 0;
 
 function updateEnemy() {
-    if (!enemy.alive) return;
+    if (!enemy.alive || gamePaused) return;
 
     if (enemyCooldown > 0) {
         enemyCooldown--;
@@ -432,7 +422,7 @@ function updateEnemy() {
    爆弾処理（勝敗判定込み）
    ============================================================ */
 function updateBomb() {
-    if (!bomb) return;
+    if (!bomb || gamePaused) return;
 
     bomb.timer--;
 
@@ -463,134 +453,4 @@ function updateBomb() {
 
         bomb = null;
 
-        setTimeout(() => explosions = [], 300);
-    }
-}
-
-/* ============================================================
-   ステージリセット
-   ============================================================ */
-function resetStage() {
-    map = JSON.parse(JSON.stringify(stages[currentStage]));
-    player = { x: 1, y: 1 };
-    enemy = { x: 13, y: 13, alive: true };
-    bomb = null;
-    explosions = [];
-    enemyCooldown = 0;
-}
-
-/* ============================================================
-   ステージクリア（勝利演出付き）
-   ============================================================ */
-function checkStageClear() {
-    if (!enemy.alive) {
-        showMessage("You Win!", () => {
-            let prev = currentStage;
-            do {
-                currentStage = Math.floor(Math.random() * stages.length);
-            } while (currentStage === prev);
-
-            resetStage();
-        });
-    }
-}
-
-/* ============================================================
-   描画
-   ============================================================ */
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-            if (map[y][x] === 1) {
-                ctx.fillStyle = "#666";
-                ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-                ctx.strokeStyle = "#999";
-                ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
-            }
-            if (map[y][x] === 2) {
-                ctx.fillStyle = "#A66";
-                ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-                ctx.strokeStyle = "#D99";
-                ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
-            }
-        }
-    }
-
-    if (bomb) {
-        let cx = bomb.x * TILE + 16;
-        let cy = bomb.y * TILE + 16;
-
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "orange";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(cx + 8, cy - 8);
-        ctx.lineTo(cx + 14, cy - 14);
-        ctx.stroke();
-    }
-
-    for (let e of explosions) {
-        let cx = e.x * TILE + 16;
-        let cy = e.y * TILE + 16;
-
-        let gradient = ctx.createRadialGradient(cx, cy, 5, cx, cy, 20);
-        gradient.addColorStop(0, "yellow");
-        gradient.addColorStop(1, "orange");
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    {
-        let cx = player.x * TILE + 16;
-        let cy = player.y * TILE + 16;
-
-        ctx.fillStyle = "cyan";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
-        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    if (enemy.alive) {
-        let cx = enemy.x * TILE + 16;
-        let cy = enemy.y * TILE + 16;
-
-        ctx.fillStyle = "red";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        ctx.arc(cx - 5, cy - 3, 3, 0, Math.PI * 2);
-        ctx.arc(cx + 5, cy - 3, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-/* ============================================================
-   メインループ
-   ============================================================ */
-function loop() {
-    if (!gameStarted) return;
-
-    updateEnemy();
-    updateBomb();
-    checkStageClear();
-    draw();
-    requestAnimationFrame(loop);
-}
+        setTimeout(() =>
