@@ -9,54 +9,11 @@ body {
     height: 100vh;
 }
 
-/* Canvas */
 #gameCanvas {
     background: #222;
     border: 4px solid #555;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
 
-/* メッセージ */
-#messageBox {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: 0.3s;
-    z-index: 999;
-}
-
-#messageBox.show { opacity: 1; }
-
-#messageText {
-    background: #222;
-    padding: 30px 50px;
-    border-radius: 12px;
-    font-size: 48px;
-    border: 3px solid white;
-}
-
-#retryButton {
-    margin-top: 20px;
-    font-size: 28px;
-    padding: 10px 30px;
-    border-radius: 10px;
-    border: 2px solid white;
-    background: #444;
-    color: white;
-    cursor: pointer;
-}
-
-#retryButton:hover {
-    background: #666;
-    transform: scale(1.05);
-}
-
-/* タイトル画面 */
 #titleScreen {
     position: fixed;
     inset: 0;
@@ -69,21 +26,6 @@ body {
 
 #titleBox { text-align: center; }
 
-#titleBox h1 {
-    font-size: 64px;
-    margin-bottom: 30px;
-}
-
-#startButton {
-    font-size: 32px;
-    padding: 15px 40px;
-    border-radius: 10px;
-    border: 2px solid white;
-    background: #333;
-    color: white;
-}
-
-/* タイトルキャラ */
 #titleCharacters {
     display: flex;
     gap: 40px;
@@ -91,8 +33,7 @@ body {
     align-items: center;
 }
 
-.titlePlayer,
-.titleEnemy {
+.titlePlayer, .titleEnemy {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -102,23 +43,19 @@ body {
 .titlePlayer { background: cyan; }
 .titleEnemy { background: red; }
 
-#titleVS {
-    font-size: 48px;
-    font-weight: bold;
-}
+#titleVS { font-size: 48px; }
 
-/* 目 */
 .eyes {
     position: absolute;
-    top: 28px;
-    left: 20px;
+    top: 26px;
+    left: 18px;
     display: flex;
-    gap: 10px;
+    gap: 14px;
 }
 
 .eyes span {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     background: white;
     border-radius: 50%;
     position: relative;
@@ -127,10 +64,10 @@ body {
 .eyes span::after {
     content: "";
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 5px;
-    height: 5px;
+    top: 5px;
+    left: 5px;
+    width: 6px;
+    height: 6px;
     background: black;
     border-radius: 50%;
 }
