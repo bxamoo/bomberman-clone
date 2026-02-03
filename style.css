@@ -1,54 +1,43 @@
-/* 画面全体のレイアウト */
 body {
     margin: 0;
     background: #111;
     color: #fff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
 }
 
-/* キャンバスの枠 */
 #gameCanvas {
     background: #222;
     border: 4px solid #555;
     box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
 
-/* 勝利・敗北メッセージボックス */
 #messageBox {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(0,0,0,0.6);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 999;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: 0.3s;
+    z-index: 999;
 }
 
-#messageBox.show {
-    opacity: 1;
-}
+#messageBox.show { opacity: 1; }
 
 #messageText {
     background: #222;
     padding: 30px 50px;
     border-radius: 12px;
     font-size: 48px;
-    color: white;
     border: 3px solid white;
-    box-shadow: 0 0 20px rgba(255,255,255,0.5);
 }
 
-/* Try Again ボタン */
 #retryButton {
     margin-top: 20px;
     font-size: 28px;
@@ -58,7 +47,6 @@ body {
     background: #444;
     color: white;
     cursor: pointer;
-    transition: 0.2s;
 }
 
 #retryButton:hover {
@@ -66,13 +54,9 @@ body {
     transform: scale(1.05);
 }
 
-/* タイトル画面 */
 #titleScreen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(0,0,0,0.85);
     display: flex;
     justify-content: center;
@@ -80,15 +64,11 @@ body {
     z-index: 1000;
 }
 
-#titleBox {
-    text-align: center;
-    color: white;
-}
+#titleBox { text-align: center; }
 
 #titleBox h1 {
     font-size: 64px;
     margin-bottom: 30px;
-    text-shadow: 0 0 20px rgba(255,255,255,0.6);
 }
 
 #startButton {
@@ -98,51 +78,23 @@ body {
     border: 2px solid white;
     background: #333;
     color: white;
-    cursor: pointer;
-    transition: 0.2s;
 }
 
-#startButton:hover {
-    background: #555;
-    transform: scale(1.05);
-}
-
-/* タイトル画面のキャラ飾り */
 #titleCharacters {
     display: flex;
-    justify-content: center;
-    align-items: center;
     gap: 40px;
     margin-bottom: 30px;
 }
 
-/* 青いプレイヤー丸 */
-.titlePlayer {
+.titlePlayer, .titleEnemy {
     width: 80px;
     height: 80px;
-    background: cyan;
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0,255,255,0.7);
 }
 
-/* 赤い敵丸 */
-.titleEnemy {
-    width: 80px;
-    height: 80px;
-    background: red;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255,0,0,0.7);
-}
+.titlePlayer { background: cyan; }
+.titleEnemy { background: red; }
 
-/* VS テキスト */
-#titleVS {
-    font-size: 48px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 0 0 10px rgba(255,255,255,0.6);
-}
+#titleVS { font-size: 48px; }
 
-/* 汎用 hidden クラス */
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
