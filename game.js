@@ -19,8 +19,16 @@ function drawTitleCharacter(canvasId,color){
 
     const eyeOffsets=[{x:-10,y:-8},{x:10,y:-8}];
     eyeOffsets.forEach(off=>{
-        ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(cx+off.x,cy+off.y,8,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle="black"; ctx.beginPath(); ctx.arc(cx+off.x,cy+off.y,4,0,Math.PI*2); ctx.fill();
+        // 白目
+        ctx.fillStyle="white";
+        ctx.beginPath();
+        ctx.arc(cx+off.x,cy+off.y,10,0,Math.PI*2);
+        ctx.fill();
+        // 黒目
+        ctx.fillStyle="black";
+        ctx.beginPath();
+        ctx.arc(cx+off.x,cy+off.y,5,0,Math.PI*2);
+        ctx.fill();
     });
 }
 
@@ -115,10 +123,9 @@ function handleKeyPress(key){
     if(key==="ArrowDown") ny++;
     if(key==="ArrowLeft") nx--;
     if(key==="ArrowRight") nx++;
-    if(canMove(nx,ny)){ player.x=nx; player.y=ny; }
-
+    if(canMove(nx,ny)) player.x=nx; player.y=ny;
     if(key===" " && !bombs.find(b=>b.owner==="player")){
-        bombs.push({x:player.x,y:player.y,timer:120,owner:"player"}); // 爆発まで2秒
+        bombs.push({x:player.x,y:player.y,timer:120,owner:"player"});
     }
 }
 
@@ -154,18 +161,15 @@ function updateBombs(){
         let b=bombs[i]; b.timer--;
         if(b.timer<=0){
             let tiles=getExplosionTiles(b);
-            explosions.push({tiles,frame:0}); // 爆風アニメーション用
-
+            explosions.push({tiles,frame:0});
             tiles.forEach(e=>{ if(map[e.y]&&map[e.y][e.x]===2) map[e.y][e.x]=0; });
             tiles.forEach(e=>{ if(player.x===e.x&&player.y===e.y) showMessage("You Lose…",()=>resetStage()); });
             tiles.forEach(e=>{ if(enemy.x===e.x&&enemy.y===e.y) enemy.alive=false; });
-
             bombs.splice(i,1);
         }
     }
 
-    // 爆風アニメーションカウント
-    for(let i=explosions.length-1;i>=0;i++){
+    for(let i=explosions.length-1;i>=0;i--){
         explosions[i].frame++;
         if(explosions[i].frame>30) explosions.splice(i,1);
     }
@@ -202,7 +206,6 @@ function enemyAI(){
     const ek=`${enemy.x},${enemy.y}`;
     const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
 
-    // 危険回避
     if(danger.has(ek)){
         let safeMoves=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
             .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
@@ -212,7 +215,6 @@ function enemyAI(){
         }
     }
 
-    // 壊せるブロックがあれば置く
     let breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
         .filter(p=>map[p.y]&&map[p.y][p.x]===2);
     if(breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
@@ -220,16 +222,7 @@ function enemyAI(){
         return;
     }
 
-    // プレイヤー追跡（単純な1マス移動）
     let dx=player.x-enemy.x,dy=player.y-enemy.y;
-    let moves=dirs.slice();
-    moves.sort((a,b)=>Math.abs(dx-(a.x)) + Math.abs(dy-(a.y)) - (Math.abs(dx-(b.x))+Math.abs(dy-(b.y))));
-    for(let d of moves){
-        let nx=enemy.x+d.x,ny=enemy.y+d.y;
-        if(canMove(nx,ny)&&!danger.has(`${nx},${ny}`)){ enemy.x=nx; enemy.y=ny; return; }
-    }
-
-    // ランダム移動
     dirs.sort(()=>Math.random()-0.5);
     for(let d of dirs){
         let nx=enemy.x+d.x,ny=enemy.y+d.y;
@@ -241,7 +234,6 @@ function enemyAI(){
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // マップ
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
             if(map[y][x]===1){ ctx.fillStyle="#666"; ctx.fillRect(x*TILE,y*TILE,TILE,TILE); }
@@ -249,14 +241,11 @@ function draw(){
         }
     }
 
-    // 爆弾
     bombs.forEach(b=>{
         let cx=b.x*TILE+TILE/2,cy=b.y*TILE+TILE/2;
         ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.fill();
-        ctx.strokeStyle="yellow"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx-8,cy-8); ctx.lineTo(cx+8,cy+8); ctx.stroke();
     });
 
-    // 爆風アニメーション（伸び縮み）
     explosions.forEach(ex=>{
         ex.tiles.forEach(e=>{
             let cx=e.x*TILE+TILE/2,cy=e.y*TILE+TILE/2;
@@ -272,7 +261,6 @@ function draw(){
     if(enemy.alive) drawCharacter(enemy.x,enemy.y,"red");
 }
 
-/* ぷよ目キャラクター描画 */
 function drawCharacter(x,y,color){
     let cx=x*TILE+TILE/2,cy=y*TILE+TILE/2;
     ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2); ctx.fill();
@@ -290,3 +278,11 @@ function loop(){
     enemyAI(); updateBombs(); checkStageClear(); draw();
     requestAnimationFrame(loop);
 }
+
+/* ================= スタートボタン連携 ================= */
+document.getElementById("startButton").addEventListener("click",()=>{
+    document.getElementById("titleScreen").style.display="none";
+    gameStarted = true;
+    resetStage();
+    loop();
+});
