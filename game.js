@@ -15,13 +15,13 @@ let gameStarted = false;
 let gamePaused = false;
 let animationId = null;
 
-/* ================= タイトル開始 ================= */
+/* ================= 開始 ================= */
 
-document.getElementById("startButton").addEventListener("click", () => {
+document.getElementById("startButton").onclick = () => {
     document.getElementById("titleScreen").style.display = "none";
     gameStarted = true;
     loop();
-});
+};
 
 /* ================= ステージ ================= */
 
@@ -47,8 +47,7 @@ function generateStage(pattern) {
 
 const stages = [
     generateStage([[3,3,3,3,3],[3,2,0,2,3],[3,0,2,0,3],[3,2,0,2,3],[3,3,3,3,3]]),
-    generateStage([[3,2,0,2,3],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[3,2,0,2,3]]),
-    generateStage([[3,0,2,0,3],[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0],[3,0,2,0,3]])
+    generateStage([[3,2,0,2,3],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[3,2,0,2,3]])
 ];
 
 let currentStage = 0;
@@ -56,11 +55,9 @@ let map;
 
 /* ================= 状態 ================= */
 
-let player;
-let enemy;
-let bomb;
-let explosions = [];
+let player, enemy, bomb, explosions;
 let enemyCooldown = 0;
+let lookX = 0, lookY = 1;
 
 function resetStage() {
     map = JSON.parse(JSON.stringify(stages[currentStage]));
@@ -71,6 +68,8 @@ function resetStage() {
     enemyCooldown = 0;
 }
 
+resetStage();
+
 /* ================= 入力 ================= */
 
 document.addEventListener("keydown", e => {
@@ -79,10 +78,10 @@ document.addEventListener("keydown", e => {
     let nx = player.x;
     let ny = player.y;
 
-    if (e.key === "ArrowUp") ny--;
-    if (e.key === "ArrowDown") ny++;
-    if (e.key === "ArrowLeft") nx--;
-    if (e.key === "ArrowRight") nx++;
+    if (e.key === "ArrowUp") { ny--; lookX = 0; lookY = -1; }
+    if (e.key === "ArrowDown") { ny++; lookX = 0; lookY = 1; }
+    if (e.key === "ArrowLeft") { nx--; lookX = -1; lookY = 0; }
+    if (e.key === "ArrowRight") { nx++; lookX = 1; lookY = 0; }
 
     if (map[ny]?.[nx] === 0) {
         player.x = nx;
@@ -112,7 +111,6 @@ function getExplosionTiles(b) {
 
 function updateBomb() {
     if (!bomb || gamePaused) return;
-
     bomb.timer--;
 
     if (bomb.timer <= 0) {
@@ -129,16 +127,12 @@ function updateBomb() {
     }
 }
 
-/* ================= 敵AI（安定版） ================= */
+/* ================= 敵AI ================= */
 
 function updateEnemy() {
     if (!enemy.alive || gamePaused) return;
 
-    if (enemyCooldown > 0) {
-        enemyCooldown--;
-        return;
-    }
-
+    if (enemyCooldown-- > 0) return;
     enemyCooldown = 20;
 
     let dx = Math.abs(enemy.x - player.x);
@@ -172,7 +166,7 @@ function updateEnemy() {
 
 /* ================= 勝敗 ================= */
 
-function showMessage(text, callback) {
+function showMessage(text, cb) {
     gamePaused = true;
     cancelAnimationFrame(animationId);
 
@@ -186,7 +180,7 @@ function showMessage(text, callback) {
         box.classList.remove("show");
         setTimeout(() => {
             box.classList.add("hidden");
-            callback();
+            cb();
             gamePaused = false;
             loop();
         }, 300);
@@ -199,7 +193,7 @@ function lose() {
 
 function win() {
     showMessage("You Win!", () => {
-        currentStage = Math.floor(Math.random() * stages.length);
+        currentStage = (currentStage + 1) % stages.length;
         resetStage();
     });
 }
@@ -213,6 +207,31 @@ function drawCircle(x, y, r, color) {
     ctx.fill();
 }
 
+function drawEyes(cx, cy, dx, dy) {
+    dx = Math.max(-1, Math.min(1, dx));
+    dy = Math.max(-1, Math.min(1, dy));
+
+    const ex = 5, ey = -3;
+
+    for (let side of [-1, 1]) {
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(cx + ex * side, cy + ey, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "black";
+        ctx.beginPath();
+        ctx.arc(
+            cx + ex * side + dx * 1.5,
+            cy + ey + dy * 1.5,
+            1.5,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -224,16 +243,24 @@ function draw() {
         }
     }
 
-    if (bomb) drawCircle(bomb.x * TILE + 16, bomb.y * TILE + 16, 12, "black");
+    if (bomb)
+        drawCircle(bomb.x * TILE + 16, bomb.y * TILE + 16, 12, "black");
 
     explosions.forEach(e =>
         drawCircle(e.x * TILE + 16, e.y * TILE + 16, 18, "orange")
     );
 
-    drawCircle(player.x * TILE + 16, player.y * TILE + 16, 14, "cyan");
+    const pcx = player.x * TILE + 16;
+    const pcy = player.y * TILE + 16;
+    drawCircle(pcx, pcy, 14, "cyan");
+    drawEyes(pcx, pcy, lookX, lookY);
 
-    if (enemy.alive)
-        drawCircle(enemy.x * TILE + 16, enemy.y * TILE + 16, 14, "red");
+    if (enemy.alive) {
+        const ecx = enemy.x * TILE + 16;
+        const ecy = enemy.y * TILE + 16;
+        drawCircle(ecx, ecy, 14, "red");
+        drawEyes(ecx, ecy, player.x - enemy.x, player.y - enemy.y);
+    }
 }
 
 /* ================= ループ ================= */
@@ -246,6 +273,3 @@ function loop() {
     draw();
     animationId = requestAnimationFrame(loop);
 }
-
-/* 初期化 */
-resetStage();
