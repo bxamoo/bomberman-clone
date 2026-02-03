@@ -6,6 +6,17 @@ const ROWS = 15;
 const COLS = 15;
 
 /* ============================================================
+   ゲーム開始フラグ（タイトル画面からスタート）
+   ============================================================ */
+let gameStarted = false;
+
+document.getElementById("startButton").addEventListener("click", () => {
+    document.getElementById("titleScreen").style.display = "none";
+    gameStarted = true;
+    loop();
+});
+
+/* ============================================================
    ステージ生成（固い壁は一個飛ばし、壊せる壁は5パターン）
    ============================================================ */
 function generateStage(pattern5x5) {
@@ -107,7 +118,7 @@ let bomb = null;
 let explosions = [];
 
 /* ============================================================
-   メッセージボックス
+   メッセージボックス（You Win / You Lose）
    ============================================================ */
 function showMessage(text, callback) {
     const box = document.getElementById("messageBox");
@@ -139,6 +150,8 @@ function showMessage(text, callback) {
    ============================================================ */
 let keyPressed = {};
 document.addEventListener("keydown", e => {
+    if (!gameStarted) return; // タイトル中は無効
+
     if (!keyPressed[e.key]) {
         keyPressed[e.key] = true;
         handleKeyPress(e.key);
@@ -573,11 +586,11 @@ function draw() {
    メインループ
    ============================================================ */
 function loop() {
+    if (!gameStarted) return;
+
     updateEnemy();
     updateBomb();
     checkStageClear();
     draw();
     requestAnimationFrame(loop);
 }
-
-loop();
