@@ -2,22 +2,19 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>爆弾ゲーム</title>
+<title>Bomber Game</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <canvas id="gameCanvas" width="480" height="480"></canvas>
 
-    <!-- STARTボタン -->
-    <button id="startButton" class="centerButton">START</button>
+    <!-- START ボタン -->
+    <button id="startButton">START</button>
 
-    <!-- Win / Lose メッセージボックス -->
+    <!-- Win/Lose メッセージ -->
     <div id="messageBox" class="hidden">
-        <div id="messageContent">
-            <p id="messageText"></p>
-            <button id="retryButton">Try Again</button>
-        </div>
+        <div id="messageText"></div>
+        <button id="retryButton">Try Again</button>
     </div>
 
     <script src="game.js"></script>
