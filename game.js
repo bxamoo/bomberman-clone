@@ -11,6 +11,7 @@ let gamePaused = false;
 document.getElementById("startButton").addEventListener("click", () => {
     document.getElementById("titleScreen").style.display = "none";
     gameStarted = true;
+    gamePaused = false;
     loop();
 });
 
@@ -52,7 +53,22 @@ function showMessage(text, callback) {
     const box = document.getElementById("messageBox");
     const msg = document.getElementById("messageText");
     const retry = document.getElementById("retryButton");
-    const topBtn = document.getElementById("topButton");
+    let topBtn = document.getElementById("topButton");
+
+    if(!topBtn){
+        topBtn = document.createElement("button");
+        topBtn.id = "topButton";
+        topBtn.textContent = "Top";
+        topBtn.style.marginTop = "20px";
+        topBtn.style.fontSize = "28px";
+        topBtn.style.padding = "10px 30px";
+        topBtn.style.borderRadius = "10px";
+        topBtn.style.border = "2px solid white";
+        topBtn.style.background = "#444";
+        topBtn.style.color = "white";
+        topBtn.style.cursor = "pointer";
+        box.appendChild(topBtn);
+    }
 
     msg.textContent = text;
     box.classList.remove("hidden");
@@ -109,7 +125,7 @@ function handleKeyPress(key){
     if(canMove(nx,ny)) { player.x=nx; player.y=ny; }
 
     if(key===" " && !bombs.find(b=>b.owner==="player")){
-        bombs.push({x:player.x, y:player.y, timer:120, owner:"player"}); // タイマー2秒
+        bombs.push({x:player.x, y:player.y, timer:120, owner:"player"});
     }
 }
 
@@ -154,7 +170,10 @@ function updateBombs(){
             bombs.splice(i,1);
         }
     }
-    explosions.forEach((ex,i)=>{ ex.timer--; if(ex.timer<=0) explosions.splice(i,1); });
+    for(let i=explosions.length-1;i>=0;i--){
+        explosions[i].timer--;
+        if(explosions[i].timer<=0) explosions.splice(i,1);
+    }
 }
 
 /* ================== ステージリセット ================== */
@@ -189,34 +208,32 @@ function enemyAI(){
     const ek=`${enemy.x},${enemy.y}`;
     const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
 
+    // 爆風回避を最優先
     if(danger.has(ek)){
         let safeMoves=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
             .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
         if(safeMoves.length>0){
             let move=safeMoves[Math.floor(Math.random()*safeMoves.length)];
-            enemy.x=move.x; enemy.y=move.y; return;
+            enemy.x=move.x; enemy.y=move.y; 
+            return;
         }
+        // どうしても安全がない場合は動かさない
         return;
     }
 
-    let breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-        .filter(p=>map[p.y]&&map[p.y][p.x]===2);
-    if(breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
-        bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
-        return;
-    }
-
-    let dx=player.x-enemy.x, dy=player.y-enemy.y;
-    let moves=dirs.slice().sort((a,b)=>Math.abs(dx-(enemy.x+a.x))+Math.abs(dy-(enemy.y+a.y)) - (Math.abs(dx-(enemy.x+b.x))+Math.abs(dy-(enemy.y+b.y))));
-    for(let d of moves){
-        let nx=enemy.x+d.x, ny=enemy.y+d.y;
-        if(canMove(nx,ny)&&!danger.has(`${nx},${ny}`)){ enemy.x=nx; enemy.y=ny; return; }
-    }
-
-    let safeDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y})).filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-    if(safeDirs.length>0){
+    // 壊せる壁より安全移動を優先
+    let safeDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
+        .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
+    if(safeDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
+        // 壊せる壁が近くにあれば置くが、安全移動を優先
+        const breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
+            .filter(p=>map[p.y]&&map[p.x]===2);
+        if(breakableDirs.length>0){
+            bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
+        }
         let move=safeDirs[Math.floor(Math.random()*safeDirs.length)];
         enemy.x=move.x; enemy.y=move.y;
+        return;
     }
 }
 
@@ -247,14 +264,12 @@ function draw(){
         ex.tiles.forEach(t=>ctx.fillRect(t.x*TILE,t.y*TILE,TILE,TILE));
     });
 
-    // プレイヤーキャラ
+    // キャラクター
     drawCharacter(player.x*TILE, player.y*TILE, "cyan");
-
-    // 敵キャラ
     if(enemy.alive) drawCharacter(enemy.x*TILE, enemy.y*TILE, "red");
 }
 
-/* ================== キャラクター描画 ================== */
+/* ================== ぷよ目キャラクター ================== */
 function drawCharacter(px, py, color){
     const r = TILE/2-2;
     const cx = px+TILE/2;
@@ -266,29 +281,42 @@ function drawCharacter(px, py, color){
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
 
-    // 目（白目＋黒目）
-    const eyeOffsetX = 8;
+    // 目（ぷよぷよ風）
+    const eyeOffsetX = 6;
     const eyeOffsetY = -4;
-    const eyeR = 4;
+    const whiteR = 6;
+    const blackR = 3;
+    const shineR = 1.5;
 
+    // 白目
     ctx.fillStyle="white";
     ctx.beginPath();
-    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,eyeR,0,Math.PI*2);
+    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,whiteR,0,Math.PI*2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,eyeR,0,Math.PI*2);
+    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,whiteR,0,Math.PI*2);
     ctx.fill();
 
+    // 黒目
     ctx.fillStyle="black";
     ctx.beginPath();
-    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,eyeR/2,0,Math.PI*2);
+    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,blackR,0,Math.PI*2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,eyeR/2,0,Math.PI*2);
+    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,blackR,0,Math.PI*2);
+    ctx.fill();
+
+    // ハイライト
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(cx-eyeOffsetX-1,cy+eyeOffsetY-1,shineR,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx+eyeOffsetX-1,cy+eyeOffsetY-1,shineR,0,Math.PI*2);
     ctx.fill();
 }
 
-/* ================== メインループ ================== */
+/* ================== ループ ================== */
 function loop(){
     if(!gameStarted) return;
     if(!gamePaused){
