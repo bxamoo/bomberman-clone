@@ -14,9 +14,7 @@ document.getElementById("startButton").addEventListener("click", () => {
     loop();
 });
 
-/* ============================================================
-   ステージ生成と初期化
-============================================================ */
+/* ================== ステージ生成 ================== */
 function generateStage(pattern5x5) {
     const stage = [];
     for (let y = 0; y < ROWS; y++) {
@@ -37,11 +35,7 @@ function generateStage(pattern5x5) {
 }
 
 const stages = [
-    generateStage([[3,3,3,3,3],[3,2,0,2,3],[3,0,2,0,3],[3,2,0,2,3],[3,3,3,3,3]]),
-    generateStage([[3,2,0,2,3],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[3,2,0,2,3]]),
-    generateStage([[3,0,2,0,3],[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0],[3,0,2,0,3]]),
-    generateStage([[3,2,2,2,3],[2,0,0,0,2],[2,0,2,0,2],[2,0,0,0,2],[3,2,2,2,3]]),
-    generateStage([[3,0,0,0,3],[0,2,2,2,0],[0,2,0,2,0],[0,2,2,2,0],[3,0,0,0,3]])
+    generateStage([[3,3,3,3,3],[3,2,0,2,3],[3,0,2,0,3],[3,2,0,2,3],[3,3,3,3,3]])
 ];
 
 let currentStage=0;
@@ -53,9 +47,7 @@ let enemy = { x:13, y:13, alive:true };
 let bombs = [];
 let explosions = [];
 
-/* ============================================================
-   メッセージ表示
-============================================================ */
+/* ================== メッセージ ================== */
 function showMessage(text, callback) {
     const box = document.getElementById("messageBox");
     const msg = document.getElementById("messageText");
@@ -97,9 +89,7 @@ function showMessage(text, callback) {
     topBtn.addEventListener("click", toTop);
 }
 
-/* ============================================================
-   キー入力
-============================================================ */
+/* ================== キー入力 ================== */
 let keyPressed = {};
 document.addEventListener("keydown", e => {
     if(!gameStarted || gamePaused) return;
@@ -119,18 +109,14 @@ function handleKeyPress(key){
     if(canMove(nx,ny)) { player.x=nx; player.y=ny; }
 
     if(key===" " && !bombs.find(b=>b.owner==="player")){
-        bombs.push({x:player.x, y:player.y, timer:60, owner:"player"});
+        bombs.push({x:player.x, y:player.y, timer:120, owner:"player"}); // タイマー2秒
     }
 }
 
-/* ============================================================
-   移動判定
-============================================================ */
+/* ================== 移動判定 ================== */
 function canMove(x,y){ return map[y] && map[y][x]===0; }
 
-/* ============================================================
-   爆風範囲
-============================================================ */
+/* ================== 爆風範囲 ================== */
 function getExplosionTiles(b){
     if(!b) return [];
     let tiles=[{x:b.x,y:b.y}];
@@ -152,9 +138,7 @@ function getDangerTiles(){
     return set;
 }
 
-/* ============================================================
-   爆弾処理
-============================================================ */
+/* ================== 爆弾処理 ================== */
 function updateBombs(){
     for(let i=bombs.length-1;i>=0;i--){
         let b=bombs[i];
@@ -173,9 +157,7 @@ function updateBombs(){
     explosions.forEach((ex,i)=>{ ex.timer--; if(ex.timer<=0) explosions.splice(i,1); });
 }
 
-/* ============================================================
-   ステージリセット
-============================================================ */
+/* ================== ステージリセット ================== */
 function resetStage(){
     map=JSON.parse(JSON.stringify(stages[currentStage]));
     player={x:1,y:1};
@@ -185,9 +167,7 @@ function resetStage(){
     enemyCooldown=0;
 }
 
-/* ============================================================
-   ステージクリア判定
-============================================================ */
+/* ================== ステージクリア判定 ================== */
 function checkStageClear(){
     if(!enemy.alive){
         showMessage("You Win!",()=>{
@@ -198,9 +178,7 @@ function checkStageClear(){
     }
 }
 
-/* ============================================================
-   敵 AI（自滅防止）
-============================================================ */
+/* ================== 敵AI ================== */
 let enemyCooldown=0;
 function enemyAI(){
     if(!enemy.alive||gamePaused) return;
@@ -211,7 +189,6 @@ function enemyAI(){
     const ek=`${enemy.x},${enemy.y}`;
     const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
 
-    // 爆風回避
     if(danger.has(ek)){
         let safeMoves=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
             .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
@@ -219,19 +196,16 @@ function enemyAI(){
             let move=safeMoves[Math.floor(Math.random()*safeMoves.length)];
             enemy.x=move.x; enemy.y=move.y; return;
         }
-        // 回避できなければ爆弾設置を控える
         return;
     }
 
-    // 壊せるブロック近くで爆弾設置
     let breakableDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
         .filter(p=>map[p.y]&&map[p.y][p.x]===2);
     if(breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
-        bombs.push({x:enemy.x,y:enemy.y,timer:60,owner:"enemy"});
+        bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
         return;
     }
 
-    // プレイヤー追跡（安全な道のみ）
     let dx=player.x-enemy.x, dy=player.y-enemy.y;
     let moves=dirs.slice().sort((a,b)=>Math.abs(dx-(enemy.x+a.x))+Math.abs(dy-(enemy.y+a.y)) - (Math.abs(dx-(enemy.x+b.x))+Math.abs(dy-(enemy.y+b.y))));
     for(let d of moves){
@@ -239,7 +213,6 @@ function enemyAI(){
         if(canMove(nx,ny)&&!danger.has(`${nx},${ny}`)){ enemy.x=nx; enemy.y=ny; return; }
     }
 
-    // 安全なランダム移動
     let safeDirs=dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y})).filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
     if(safeDirs.length>0){
         let move=safeDirs[Math.floor(Math.random()*safeDirs.length)];
@@ -247,9 +220,7 @@ function enemyAI(){
     }
 }
 
-/* ============================================================
-   描画
-============================================================ */
+/* ================== 描画 ================== */
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -263,8 +234,11 @@ function draw(){
 
     // 爆弾
     bombs.forEach(b=>{
-        let cx=b.x*TILE+TILE/2, cy=b.y*TILE+TILE/2;
-        ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.fill();
+        const cx=b.x*TILE+TILE/2, cy=b.y*TILE+TILE/2;
+        ctx.fillStyle="orange";
+        ctx.beginPath();
+        ctx.arc(cx,cy,12,0,Math.PI*2);
+        ctx.fill();
     });
 
     // 爆発
@@ -273,20 +247,48 @@ function draw(){
         ex.tiles.forEach(t=>ctx.fillRect(t.x*TILE,t.y*TILE,TILE,TILE));
     });
 
-    // プレイヤー
-    ctx.fillStyle="cyan";
-    ctx.fillRect(player.x*TILE,player.y*TILE,TILE,TILE);
+    // プレイヤーキャラ
+    drawCharacter(player.x*TILE, player.y*TILE, "cyan");
 
-    // 敵
-    if(enemy.alive){
-        ctx.fillStyle="red";
-        ctx.fillRect(enemy.x*TILE,enemy.y*TILE,TILE,TILE);
-    }
+    // 敵キャラ
+    if(enemy.alive) drawCharacter(enemy.x*TILE, enemy.y*TILE, "red");
 }
 
-/* ============================================================
-   メインループ
-============================================================ */
+/* ================== キャラクター描画 ================== */
+function drawCharacter(px, py, color){
+    const r = TILE/2-2;
+    const cx = px+TILE/2;
+    const cy = py+TILE/2;
+
+    // 本体
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+
+    // 目（白目＋黒目）
+    const eyeOffsetX = 8;
+    const eyeOffsetY = -4;
+    const eyeR = 4;
+
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,eyeR,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,eyeR,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="black";
+    ctx.beginPath();
+    ctx.arc(cx-eyeOffsetX,cy+eyeOffsetY,eyeR/2,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx+eyeOffsetX,cy+eyeOffsetY,eyeR/2,0,Math.PI*2);
+    ctx.fill();
+}
+
+/* ================== メインループ ================== */
 function loop(){
     if(!gameStarted) return;
     if(!gamePaused){
