@@ -1,37 +1,49 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
 const TILE = 32;
 const ROWS = 15;
 const COLS = 15;
 
-/* ============================================================
-   ゲームフラグ
-   ============================================================ */
 let gameStarted = false;
 let gamePaused = false;
 
+const startButton = document.getElementById("startButton");
+const messageBox = document.getElementById("messageBox");
+const messageText = document.getElementById("messageText");
+const retryButton = document.getElementById("retryButton");
+
+startButton.addEventListener("click", startGame);
+retryButton.addEventListener("click", startGame);
+
+function startGame() {
+    startButton.classList.add("hidden");
+    messageBox.classList.remove("show");
+    gameStarted = true;
+    gamePaused = false;
+    resetStage();
+    loop();
+}
+
 /* ============================================================
    ステージ生成
-   ============================================================ */
+============================================================ */
 function generateStage(pattern5x5) {
     const stage = [];
     for (let y = 0; y < ROWS; y++) {
         stage[y] = [];
         for (let x = 0; x < COLS; x++) {
             if (y === 0 || y === ROWS - 1 || x === 0 || x === COLS - 1) {
-                stage[y][x] = 1; // 固い壁
+                stage[y][x] = 1;
                 continue;
             }
             if (y % 2 === 0 && x % 2 === 0) {
                 stage[y][x] = 1;
                 continue;
             }
-
             const py = Math.floor(y / 3);
             const px = Math.floor(x / 3);
             const v = pattern5x5[py][px];
-            stage[y][x] = (v === 2 ? 2 : 0); // 2=壊せる壁, 0=空
+            stage[y][x] = (v === 2 ? 2 : 0);
         }
     }
     stage[1][1] = stage[1][2] = stage[2][1] = 0;
@@ -39,9 +51,6 @@ function generateStage(pattern5x5) {
     return stage;
 }
 
-/* ============================================================
-   ステージ 5 パターン
-   ============================================================ */
 const stages = [
     generateStage([
         [3,3,3,3,3],
@@ -85,55 +94,15 @@ let map = JSON.parse(JSON.stringify(stages[currentStage]));
 
 /* ============================================================
    プレイヤー・敵・爆弾
-   ============================================================ */
+============================================================ */
 let player = { x: 1, y: 1 };
 let enemy = { x: 13, y: 13, alive: true };
 let bombs = [];
 let explosions = [];
 
 /* ============================================================
-   メッセージボックス（Win/Lose）
-   ============================================================ */
-function showMessage(text) {
-    const box = document.getElementById("messageBox");
-    const msg = document.getElementById("messageText");
-    const retry = document.getElementById("retryButton");
-
-    msg.textContent = text;
-    box.classList.remove("hidden");
-    gamePaused = true;
-
-    setTimeout(() => box.classList.add("show"), 10);
-
-    function close() {
-        box.classList.remove("show");
-        setTimeout(() => {
-            box.classList.add("hidden");
-            retry.removeEventListener("click", close);
-            startGame();
-        }, 300);
-    }
-
-    retry.addEventListener("click", close);
-}
-
-/* ============================================================
-   STARTボタン
-   ============================================================ */
-document.getElementById("startButton").addEventListener("click", () => {
-    startGame();
-});
-
-function startGame() {
-    gameStarted = true;
-    gamePaused = false;
-    resetStage();
-    loop();
-}
-
-/* ============================================================
    キー入力
-   ============================================================ */
+============================================================ */
 let keyPressed = {};
 document.addEventListener("keydown", e => {
     if (!gameStarted || gamePaused) return;
@@ -142,15 +111,22 @@ document.addEventListener("keydown", e => {
         handleKeyPress(e.key);
     }
 });
-document.addEventListener("keyup", e => keyPressed[e.key] = false);
+document.addEventListener("keyup", e => { keyPressed[e.key] = false; });
 
 function handleKeyPress(key) {
-    let nx = player.x, ny = player.y;
+    let nx = player.x;
+    let ny = player.y;
+
     if (key === "ArrowUp") ny--;
     if (key === "ArrowDown") ny++;
     if (key === "ArrowLeft") nx--;
     if (key === "ArrowRight") nx++;
-    if (canMove(nx, ny)) { player.x = nx; player.y = ny; }
+
+    if (canMove(nx, ny)) {
+        player.x = nx;
+        player.y = ny;
+    }
+
     if (key === " " && !bombs.find(b => b.owner === "player")) {
         bombs.push({ x: player.x, y: player.y, timer: 120, owner: "player" });
     }
@@ -158,27 +134,27 @@ function handleKeyPress(key) {
 
 /* ============================================================
    通行判定
-   ============================================================ */
+============================================================ */
 function canMove(x, y) {
     if (!map[y] || map[y][x] === undefined) return false;
-    if (map[y][x] === 1 || map[y][x] === 2) return false;
+    if (map[y][x] === 1) return false; // 壊せる壁は通れる
     if (bombs.find(b => b.x === x && b.y === y)) return false;
     return true;
 }
 
 /* ============================================================
-   爆風範囲
-   ============================================================ */
+   爆風
+============================================================ */
 function getExplosionTiles(b) {
     if (!b) return [];
     let tiles = [{ x: b.x, y: b.y }];
     let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
     for (let d of dirs) {
         for (let i = 1; i <= 2; i++) {
-            let nx = b.x + d.x * i;
-            let ny = b.y + d.y * i;
+            let nx = b.x + d.x*i;
+            let ny = b.y + d.y*i;
             if (!map[ny] || map[ny][nx] === undefined) break;
-            tiles.push({ x: nx, y: ny });
+            tiles.push({ x:nx, y:ny });
             if (map[ny][nx] === 1) break;
         }
     }
@@ -186,8 +162,8 @@ function getExplosionTiles(b) {
 }
 
 /* ============================================================
-   危険タイルセット
-   ============================================================ */
+   危険タイル
+============================================================ */
 function getDangerTiles() {
     let set = new Set();
     bombs.forEach(b => {
@@ -198,8 +174,8 @@ function getDangerTiles() {
 }
 
 /* ============================================================
-   爆弾処理
-   ============================================================ */
+   爆弾更新
+============================================================ */
 function updateBombs() {
     for (let i = bombs.length - 1; i >= 0; i--) {
         let b = bombs[i];
@@ -208,105 +184,79 @@ function updateBombs() {
             let tiles = getExplosionTiles(b);
             explosions.push({ tiles, timer: 60 });
 
-            // 壊せる壁を消す
-            tiles.forEach(e => {
-                if (map[e.y] && map[e.y][e.x] === 2) map[e.y][e.x] = 0;
-            });
+            tiles.forEach(e => { if (map[e.y][e.x] === 2) map[e.y][e.x]=0; });
+            tiles.forEach(e => { if (player.x===e.x && player.y===e.y) showMessage("You Lose…"); });
+            tiles.forEach(e => { if (enemy.x===e.x && enemy.y===e.y) enemy.alive=false; });
 
-            // プレイヤー当たり判定
-            tiles.forEach(e => {
-                if (player.x === e.x && player.y === e.y) showMessage("You Lose…");
-            });
-
-            // 敵当たり判定
-            tiles.forEach(e => {
-                if (enemy.x === e.x && enemy.y === e.y) enemy.alive = false;
-            });
-
-            bombs.splice(i, 1);
+            bombs.splice(i,1);
         }
     }
-
-    for (let i = explosions.length - 1; i >= 0; i--) {
+    for (let i=explosions.length-1;i>=0;i--){
         explosions[i].timer--;
-        if (explosions[i].timer <= 0) explosions.splice(i, 1);
+        if(explosions[i].timer<=0) explosions.splice(i,1);
     }
 }
 
 /* ============================================================
    ステージリセット
-   ============================================================ */
+============================================================ */
 function resetStage() {
     map = JSON.parse(JSON.stringify(stages[currentStage]));
-    player = { x: 1, y: 1 };
-    enemy = { x: 13, y: 13, alive: true };
+    player = { x:1, y:1 };
+    enemy = { x:13, y:13, alive:true };
     bombs = [];
     explosions = [];
     enemyCooldown = 0;
 }
 
 /* ============================================================
-   ステージクリア判定
-   ============================================================ */
-function checkStageClear() {
-    if (!enemy.alive) showMessage("You Win!");
+   メッセージ表示
+============================================================ */
+function showMessage(text) {
+    messageText.textContent = text;
+    messageBox.classList.add("show");
+    gamePaused = true;
 }
 
 /* ============================================================
-   CPU 敵AI
-   ============================================================ */
+   CPU AI（爆弾・爆風回避）
+============================================================ */
 let enemyCooldown = 0;
 function enemyAI() {
     if (!enemy.alive || gamePaused) return;
-
-    if (enemyCooldown > 0) { enemyCooldown--; return; }
+    if (enemyCooldown>0){enemyCooldown--;return;}
     enemyCooldown = 12 + Math.floor(Math.random()*6);
 
     const danger = getDangerTiles();
-    const ek = `${enemy.x},${enemy.y}`;
     const dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
 
-    if (danger.has(ek)) {
-        let safeMoves = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-            .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-        if (safeMoves.length>0){
-            let move = safeMoves[Math.floor(Math.random()*safeMoves.length)];
-            enemy.x=move.x; enemy.y=move.y; return;
-        }
+    // 爆風回避
+    if(danger.has(`${enemy.x},${enemy.y}`)){
+        let safe = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
+            .filter(p=>canMove(p.x,p.y) && !danger.has(`${p.x},${p.y}`));
+        if(safe.length>0){let m=safe[Math.floor(Math.random()*safe.length)]; enemy.x=m.x; enemy.y=m.y; return;}
     }
 
+    // 壊せる壁の横に爆弾設置
     let breakableDirs = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
         .filter(p=>map[p.y] && map[p.y][p.x]===2);
-
-    if (breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")) {
-        let safeSpots = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-            .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-        if (safeSpots.length>0){
-            bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
-            let move = safeSpots[Math.floor(Math.random()*safeSpots.length)];
-            enemy.x=move.x; enemy.y=move.y; return;
-        }
+    if(breakableDirs.length>0 && !bombs.find(b=>b.owner==="enemy")){
+        bombs.push({x:enemy.x,y:enemy.y,timer:120,owner:"enemy"});
+        return;
     }
 
-    let targetMoves = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-        .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-    if (targetMoves.length>0){
-        targetMoves.sort((a,b)=>Math.abs(a.x-player.x)+Math.abs(a.y-player.y)
-                            - Math.abs(b.x-player.x)-Math.abs(b.y-player.y));
-        enemy.x=targetMoves[0].x; enemy.y=targetMoves[0].y; return;
-    }
-
-    let safeDirs = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
-        .filter(p=>canMove(p.x,p.y)&&!danger.has(`${p.x},${p.y}`));
-    if (safeDirs.length>0){
-        let move = safeDirs[Math.floor(Math.random()*safeDirs.length)];
-        enemy.x=move.x; enemy.y=move.y;
+    // プレイヤー追跡（安全移動）
+    let moves = dirs.map(d=>({x:enemy.x+d.x,y:enemy.y+d.y}))
+        .filter(p=>canMove(p.x,p.y) && !danger.has(`${p.x},${p.y}`));
+    if(moves.length>0){
+        moves.sort((a,b)=>Math.abs(a.x-player.x)+Math.abs(a.y-player.y) - Math.abs(b.x-player.x)+Math.abs(b.y-player.y));
+        enemy.x = moves[0].x; enemy.y = moves[0].y;
     }
 }
 
 /* ============================================================
    描画
-   ============================================================ */
+============================================================ */
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -325,9 +275,9 @@ function draw() {
     explosions.forEach(ex=>{
         ex.tiles.forEach(e=>{
             let cx=e.x*TILE+TILE/2, cy=e.y*TILE+TILE/2;
-            let grad=ctx.createRadialGradient(cx,cy,5,cx,cy,20);
-            grad.addColorStop(0,"yellow"); grad.addColorStop(1,"orange");
-            ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.fill();
+            let g = ctx.createRadialGradient(cx,cy,5,cx,cy,20);
+            g.addColorStop(0,"yellow"); g.addColorStop(1,"orange");
+            ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.fill();
         });
     });
 
@@ -338,19 +288,20 @@ function draw() {
 function drawCharacter(x,y,color){
     let cx=x*TILE+TILE/2, cy=y*TILE+TILE/2;
     ctx.fillStyle=color; ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="white"; ctx.beginPath();
-    ctx.arc(cx-5,cy-3,6,0,Math.PI*2);
-    ctx.arc(cx+5,cy-3,6,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="black"; ctx.beginPath();
-    ctx.arc(cx-5,cy-3,3,0,Math.PI*2);
-    ctx.arc(cx+5,cy-3,3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="white";
+    ctx.beginPath(); ctx.arc(cx-5,cy-3,6,0,Math.PI*2); ctx.arc(cx+5,cy-3,6,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="black";
+    ctx.beginPath(); ctx.arc(cx-5,cy-3,3,0,Math.PI*2); ctx.arc(cx+5,cy-3,3,0,Math.PI*2); ctx.fill();
 }
 
 /* ============================================================
    メインループ
-   ============================================================ */
+============================================================ */
 function loop(){
-    if(!gameStarted||gamePaused) return;
-    enemyAI(); updateBombs(); checkStageClear(); draw();
+    if(!gameStarted || gamePaused) return;
+    enemyAI();
+    updateBombs();
+    if(!enemy.alive) showMessage("You Win!");
+    draw();
     requestAnimationFrame(loop);
 }
