@@ -1,25 +1,47 @@
-<!-- タイトル画面 -->
-<div id="titleScreen">
-    <div id="titleBox">
-        <h1>Bomber Game</h1>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Bomber Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-        <!-- ★ タイトル画面のキャラ飾り（目付きバージョン） -->
-        <div id="titleCharacters">
-            <!-- プレイヤー -->
-            <div class="titlePlayer">
-                <span class="left"></span>
-                <span class="right"></span>
+    <!-- タイトル画面 -->
+    <div id="titleScreen">
+        <div id="titleBox">
+            <h1>Bomber Game</h1>
+
+            <!-- タイトル画面のキャラ飾り（目付きバージョン） -->
+            <div id="titleCharacters">
+                <!-- プレイヤー -->
+                <div class="titlePlayer">
+                    <span class="left"></span>
+                    <span class="right"></span>
+                </div>
+
+                <div id="titleVS">VS</div>
+
+                <!-- 敵 -->
+                <div class="titleEnemy">
+                    <span class="left"></span>
+                    <span class="right"></span>
+                </div>
             </div>
 
-            <div id="titleVS">VS</div>
-
-            <!-- 敵 -->
-            <div class="titleEnemy">
-                <span class="left"></span>
-                <span class="right"></span>
-            </div>
+            <button id="startButton">Start</button>
         </div>
-
-        <button id="startButton">Start</button>
     </div>
-</div>
+
+    <!-- ゲームキャンバス -->
+    <canvas id="gameCanvas" width="480" height="480"></canvas>
+
+    <!-- 勝利・敗北メッセージ -->
+    <div id="messageBox" class="hidden">
+        <div id="messageText"></div>
+        <button id="retryButton">Try Again</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
