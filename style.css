@@ -1,4 +1,3 @@
-/* 画面全体のレイアウト */
 body {
     margin: 0;
     background: #111;
@@ -10,14 +9,13 @@ body {
     height: 100vh;
 }
 
-/* キャンバスの枠 */
 #gameCanvas {
     background: #222;
     border: 4px solid #555;
     box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
 
-/* 勝利・敗北メッセージボックス */
+/* メッセージボックス */
 #messageBox {
     position: fixed;
     top: 0;
@@ -44,14 +42,10 @@ body {
     color: white;
     border: 3px solid white;
     box-shadow: 0 0 20px rgba(255,255,255,0.5);
-    text-align: center;
 }
 
-/* メッセージボタン */
 #messageButtons {
     margin-top: 20px;
-    display: flex;
-    gap: 20px;
 }
 
 #retryButton, #topButton {
@@ -63,6 +57,7 @@ body {
     color: white;
     cursor: pointer;
     transition: 0.2s;
+    margin: 0 10px;
 }
 
 #retryButton:hover, #topButton:hover {
@@ -84,16 +79,8 @@ body {
     z-index: 1000;
 }
 
-#titleBox {
-    text-align: center;
-    color: white;
-}
-
-#titleBox h1 {
-    font-size: 64px;
-    margin-bottom: 30px;
-    text-shadow: 0 0 20px rgba(255,255,255,0.6);
-}
+#titleBox { text-align: center; color: white; }
+#titleBox h1 { font-size: 64px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(255,255,255,0.6); }
 
 #startButton {
     font-size: 32px;
@@ -105,35 +92,22 @@ body {
     cursor: pointer;
     transition: 0.2s;
 }
+#startButton:hover { background: #555; transform: scale(1.05); }
 
-#startButton:hover {
-    background: #555;
-    transform: scale(1.05);
-}
+#titleCharacters { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 30px; }
 
-/* タイトル画面のキャラ飾り */
-#titleCharacters {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-    margin-bottom: 30px;
-}
-
-/* キャラクター本体 */
+/* タイトルキャラクター */
 .titlePlayer, .titleEnemy {
     position: relative;
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255,255,255,0.7);
 }
 
-.titlePlayer { background: cyan; box-shadow: 0 0 15px rgba(0,255,255,0.8); }
-.titleEnemy { background: red; box-shadow: 0 0 15px rgba(255,0,0,0.8); }
+.titlePlayer { background: cyan; }
+.titleEnemy { background: red; }
 
-/* 白目＋黒目 */
-.eye {
+.white-eye {
     position: absolute;
     width: 20px;
     height: 20px;
@@ -141,10 +115,10 @@ body {
     border-radius: 50%;
     top: 28px;
 }
-.eye.left { left: 18px; }
-.eye.right { right: 18px; }
+.white-eye.left { left: 15px; }
+.white-eye.right { right: 15px; }
 
-.pupil {
+.black-eye {
     position: absolute;
     width: 10px;
     height: 10px;
@@ -162,5 +136,5 @@ body {
     text-shadow: 0 0 10px rgba(255,255,255,0.6);
 }
 
-/* 汎用 hidden クラス */
+/* hidden クラス */
 .hidden { display: none; }
