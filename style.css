@@ -1,15 +1,23 @@
+/* 画面全体のレイアウト */
 body {
-    text-align: center;
-    background: #222;
-    color: white;
-    font-family: sans-serif;
+    margin: 0;
+    background: #111;
+    color: #fff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-canvas {
-    background: #444;
-    margin-top: 20px;
-    border: 2px solid white;
+/* キャンバスの枠 */
+#gameCanvas {
+    background: #222;
+    border: 4px solid #555;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
+
+/* 勝利・敗北メッセージボックス */
 #messageBox {
     position: fixed;
     top: 0;
@@ -38,6 +46,49 @@ canvas {
     border: 3px solid white;
     box-shadow: 0 0 20px rgba(255,255,255,0.5);
 }
+
+/* タイトル画面 */
+#titleScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#titleBox {
+    text-align: center;
+    color: white;
+}
+
+#titleBox h1 {
+    font-size: 64px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.6);
+}
+
+#startButton {
+    font-size: 32px;
+    padding: 15px 40px;
+    border-radius: 10px;
+    border: 2px solid white;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#startButton:hover {
+    background: #555;
+    transform: scale(1.05);
+}
+
+/* 汎用 hidden クラス */
 .hidden {
     display: none;
 }
