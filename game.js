@@ -438,4 +438,21 @@ function drawCharacter(x, y, color) {
     ctx.fill();
 
     ctx.fillStyle = "black";
-    ctx.begin
+    ctx.beginPath();
+    ctx.arc(cx - 5, cy - 3, 2, 0, Math.PI*2);
+    ctx.arc(cx + 5, cy - 3, 2, 0, Math.PI*2);
+    ctx.fill();
+}
+
+/* ============================================================
+   メインループ
+   ============================================================ */
+function loop() {
+    if (!gameStarted || gamePaused) return;
+
+    enemyAI();
+    updateBombs();
+    checkStageClear();
+    draw();
+    requestAnimationFrame(loop);
+}
