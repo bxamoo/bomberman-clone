@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Bomber Game</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爆弾ゲーム</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- ゲームキャンバス -->
     <canvas id="gameCanvas" width="480" height="480"></canvas>
 
-    <!-- 勝利・敗北メッセージ -->
+    <!-- STARTボタン -->
+    <button id="startButton" class="centerButton">START</button>
+
+    <!-- Win / Lose メッセージボックス -->
     <div id="messageBox" class="hidden">
-        <div id="messageText"></div>
-        <div id="messageButtons">
+        <div id="messageContent">
+            <p id="messageText"></p>
             <button id="retryButton">Try Again</button>
-            <button id="topButton">Top</button>
         </div>
     </div>
 
