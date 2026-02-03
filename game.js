@@ -107,6 +107,34 @@ let bomb = null;
 let explosions = [];
 
 /* ============================================================
+   メッセージボックス
+   ============================================================ */
+function showMessage(text, callback) {
+    const box = document.getElementById("messageBox");
+    const msg = document.getElementById("messageText");
+
+    msg.textContent = text;
+    box.classList.remove("hidden");
+
+    setTimeout(() => {
+        box.classList.add("show");
+    }, 10);
+
+    function close() {
+        box.classList.remove("show");
+        setTimeout(() => {
+            box.classList.add("hidden");
+            window.removeEventListener("keydown", close);
+            window.removeEventListener("click", close);
+            callback();
+        }, 300);
+    }
+
+    window.addEventListener("keydown", close);
+    window.addEventListener("click", close);
+}
+
+/* ============================================================
    キー入力（1クリック＝1マス移動）
    ============================================================ */
 let keyPressed = {};
@@ -216,7 +244,7 @@ function findPath(start, goal, dangerTiles = new Set()) {
 }
 
 /* ============================================================
-   爆風範囲
+   爆風範囲（距離2マス・固い壁で遮断）
    ============================================================ */
 function getExplosionTiles(b) {
     if (!b) return [];
@@ -230,10 +258,13 @@ function getExplosionTiles(b) {
     ];
 
     for (let d of dirs) {
-        let nx = b.x + d.x;
-        let ny = b.y + d.y;
-        if (!map[ny] || map[ny][nx] === undefined) continue;
-        tiles.push({ x: nx, y: ny });
+        for (let i = 1; i <= 2; i++) {
+            let nx = b.x + d.x * i;
+            let ny = b.y + d.y * i;
+            if (!map[ny] || map[ny][nx] === undefined) break;
+            tiles.push({ x: nx, y: ny });
+            if (map[ny][nx] === 1) break; // 固い壁で止まる
+        }
     }
 
     return tiles;
@@ -288,7 +319,7 @@ function enemyAvoidExplosion() {
 }
 
 /* ============================================================
-   敵 AI：爆弾設置
+   敵 AI：爆弾設置（置いたらすぐ逃げモード）
    ============================================================ */
 function enemyTryPlaceBomb() {
     if (!enemy.alive || bomb) return;
@@ -298,6 +329,7 @@ function enemyTryPlaceBomb() {
 
     if (dx + dy <= 3) {
         bomb = { x: enemy.x, y: enemy.y, timer: 60, owner: "enemy" };
+        enemyCooldown = 0; // すぐ逃げる
         return;
     }
 
@@ -319,6 +351,7 @@ function enemyTryPlaceBomb() {
             let ny = enemy.y + d.y;
             if (map[ny] && map[ny][nx] === 2) {
                 bomb = { x: enemy.x, y: enemy.y, timer: 60, owner: "enemy" };
+                enemyCooldown = 0; // すぐ逃げる
                 return;
             }
         }
@@ -368,13 +401,11 @@ let enemyCooldown = 0;
 function updateEnemy() {
     if (!enemy.alive) return;
 
-    // クールダウン中は動かない
     if (enemyCooldown > 0) {
         enemyCooldown--;
         return;
     }
 
-    // 行動後のクールダウン（自然な動きに）
     enemyCooldown = 18 + Math.floor(Math.random() * 10);
 
     if (enemyAvoidExplosion()) return;
@@ -385,7 +416,7 @@ function updateEnemy() {
 }
 
 /* ============================================================
-   爆弾処理
+   爆弾処理（勝敗判定込み）
    ============================================================ */
 function updateBomb() {
     if (!bomb) return;
@@ -403,8 +434,10 @@ function updateBomb() {
 
         for (let e of explosions) {
             if (player.x === e.x && player.y === e.y) {
-                alert("プレイヤーがやられました…");
-                resetStage();
+                showMessage("You Lose…", () => {
+                    resetStage();
+                });
+                bomb = null;
                 return;
             }
         }
@@ -430,20 +463,22 @@ function resetStage() {
     enemy = { x: 13, y: 13, alive: true };
     bomb = null;
     explosions = [];
+    enemyCooldown = 0;
 }
 
 /* ============================================================
-   ステージクリア
+   ステージクリア（勝利演出付き）
    ============================================================ */
 function checkStageClear() {
     if (!enemy.alive) {
-        let prev = currentStage;
+        showMessage("You Win!", () => {
+            let prev = currentStage;
+            do {
+                currentStage = Math.floor(Math.random() * stages.length);
+            } while (currentStage === prev);
 
-        do {
-            currentStage = Math.floor(Math.random() * stages.length);
-        } while (currentStage === prev);
-
-        resetStage();
+            resetStage();
+        });
     }
 }
 
