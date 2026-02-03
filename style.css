@@ -1,43 +1,44 @@
 body {
-    margin: 0;
-    background: #111;
-    color: #fff;
-    font-family: system-ui, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  margin: 0;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+  font-family: system-ui, sans-serif;
 }
 
 #gameCanvas {
-    background: #222;
-    border: 4px solid #555;
+  background: #222;
+  border: 4px solid #555;
 }
 
+/* タイトル画面 */
 #titleScreen {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 #titleBox { text-align: center; }
 
 #titleCharacters {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 30px;
-    align-items: center;
+  display: flex;
+  gap: 40px;
+  margin-bottom: 30px;
+  align-items: center;
 }
 
 .titlePlayer, .titleEnemy {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: relative;
 }
 
 .titlePlayer { background: cyan; }
@@ -45,31 +46,32 @@ body {
 
 #titleVS { font-size: 48px; }
 
+/* くりくり目 */
 .eyes {
-    position: absolute;
-    top: 26px;
-    left: 18px;
-    display: flex;
-    gap: 14px;
+  position: absolute;
+  top: 24px;
+  left: 12px;
+  display: flex;
+  gap: 18px;
 }
 
 .eyes span {
-    width: 16px;
-    height: 16px;
-    background: white;
-    border-radius: 50%;
-    position: relative;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  position: relative;
 }
 
 .eyes span::after {
-    content: "";
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 6px;
-    height: 6px;
-    background: black;
-    border-radius: 50%;
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 8px;
+  height: 8px;
+  background: black;
+  border-radius: 50%;
 }
 
 .hidden { display: none; }
