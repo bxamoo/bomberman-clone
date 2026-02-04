@@ -10,7 +10,6 @@ function drawChar(x, y, color) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 壁・床
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       if (map[y][x] === 1) ctx.fillStyle = "#666";
@@ -19,7 +18,6 @@ function draw() {
     }
   }
 
-  // 爆弾
   bombs.forEach(b => {
     ctx.fillStyle = "orange";
     ctx.beginPath();
@@ -27,7 +25,6 @@ function draw() {
     ctx.fill();
   });
 
-  // 爆風
   explosions.forEach(e =>
     e.tiles.forEach(t => {
       const cx = t.x * TILE + 16;
@@ -42,7 +39,6 @@ function draw() {
     })
   );
 
-  // キャラ
   drawChar(player.x, player.y, "cyan");
   if (enemy.alive) drawChar(enemy.x, enemy.y, "red");
 }
@@ -56,9 +52,8 @@ function endGame(text) {
 
 /* UI */
 startButton.onclick = () => {
-  startButton.classList.add("hidden");
   messageBox.classList.add("hidden");
-  startGame(); // ← state.js の startGame() を呼ぶ
+  startGame();
 };
 
 retryButton.onclick = () => {
