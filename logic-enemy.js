@@ -17,6 +17,24 @@ function findAnyBreakableWall() {
   return best;
 }
 
+/* ===== 壁の隣の空きマスを探す ===== */
+function findAdjacentTarget(wall) {
+  const candidates = DIRS
+    .map(([dx, dy]) => ({ x: wall.x + dx, y: wall.y + dy }))
+    .filter(p => canMove(p.x, p.y));
+
+  if (candidates.length === 0) return null;
+
+  // 敵から最も近い隣接マスを選ぶ
+  candidates.sort((a, b) => {
+    const da = Math.abs(a.x - enemy.x) + Math.abs(a.y - enemy.y);
+    const db = Math.abs(b.x - enemy.x) + Math.abs(b.y - enemy.y);
+    return da - db;
+  });
+
+  return candidates[0];
+}
+
 /* ===== 爆風範囲 ===== */
 function simulateExplosion(x, y, power) {
   const tiles = new Set();
@@ -72,30 +90,26 @@ function enemyAI() {
     }
   }
 
-  /* ===== 壁を探す（自力スキャン） ===== */
+  /* ===== 壁を探す ===== */
   const wall = findAnyBreakableWall();
+  if (!wall) return;
 
-  if (!wall) {
-    // 壁がないなら動かない（ゲーム終盤）
+  /* ===== 壁の隣の空きマスをターゲットにする ===== */
+  const target = findAdjacentTarget(wall);
+  if (!target) {
+    // 壁の周囲に空きマスがない → 別の壁を探す
     return;
   }
 
-  /* ===== 壁に向かう ===== */
-  const dx = Math.sign(wall.x - enemy.x);
-  const dy = Math.sign(wall.y - enemy.y);
-
-  const nx = enemy.x + dx;
-  const ny = enemy.y + dy;
-
-  /* ===== 壁の隣に来たら爆弾 ===== */
-  if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
+  /* ===== 隣接マスに到達したら爆弾 ===== */
+  if (enemy.x === target.x && enemy.y === target.y) {
 
     if (!bombs.some(b => b.owner === "enemy")) {
 
       const bx = enemy.x;
       const by = enemy.y;
 
-      // ★ 爆弾を置く前に逃げ道チェック（自爆防止の核心）
+      // ★ 爆弾を置く前に逃げ道チェック（自爆防止）
       const explosion = simulateExplosion(bx, by, enemyStats.firePower);
       const safeMoves = DIRS
         .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
@@ -118,7 +132,13 @@ function enemyAI() {
     }
   }
 
-  /* ===== 壁に近づく ===== */
+  /* ===== 隣接マスへ移動 ===== */
+  const dx = Math.sign(target.x - enemy.x);
+  const dy = Math.sign(target.y - enemy.y);
+
+  const nx = enemy.x + dx;
+  const ny = enemy.y + dy;
+
   if (canMove(nx, ny)) {
     enemy.x = nx;
     enemy.y = ny;
