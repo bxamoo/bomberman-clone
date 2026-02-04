@@ -1,5 +1,6 @@
 const keyLock = {};
 
+/* ===== キー入力 ===== */
 document.addEventListener("keydown", e => {
   if (!gameStarted || gamePaused || gameOver) return;
   if (keyLock[e.key]) return;
@@ -9,6 +10,7 @@ document.addEventListener("keydown", e => {
 
 document.addEventListener("keyup", e => keyLock[e.key] = false);
 
+/* ===== プレイヤー操作 ===== */
 function handleKey(key) {
   let nx = player.x;
   let ny = player.y;
@@ -23,16 +25,19 @@ function handleKey(key) {
     player.y = ny;
   }
 
+  // スペースで爆弾設置（1個制限）
   if (key === " " && !bombs.some(b => b.owner === "player")) {
     bombs.push({ x: player.x, y: player.y, timer: 120, owner: "player" });
   }
 }
 
+/* ===== 移動可能判定 ===== */
 function canMove(x, y) {
   if (!map[y] || map[y][x] !== 0) return false;
   return !bombs.some(b => b.x === x && b.y === y);
 }
 
+/* ===== 爆風範囲 ===== */
 function explosionTiles(b) {
   const tiles = [{ x: b.x, y: b.y }];
   for (const [dx, dy] of DIRS) {
@@ -41,12 +46,13 @@ function explosionTiles(b) {
       const y = b.y + dy * i;
       if (!map[y] || map[y][x] === undefined) break;
       tiles.push({ x, y });
-      if (map[y][x] === 1) break;
+      if (map[y][x] === 1) break; // 固定壁で止まる
     }
   }
   return tiles;
 }
 
+/* ===== 危険タイル ===== */
 function dangerTiles() {
   const set = new Set();
   bombs.forEach(b =>
@@ -55,6 +61,7 @@ function dangerTiles() {
   return set;
 }
 
+/* ===== 爆弾更新 ===== */
 function updateBombs() {
   for (let i = bombs.length - 1; i >= 0; i--) {
     const b = bombs[i];
@@ -64,7 +71,7 @@ function updateBombs() {
     explosions.push({ tiles, timer: 40 });
 
     tiles.forEach(t => {
-      if (map[t.y][t.x] === 2) map[t.y][t.x] = 0;
+      if (map[t.y][t.x] === 2) map[t.y][t.x] = 0; // 壊せる壁破壊
       if (player.x === t.x && player.y === t.y) endGame("You Lose…");
       if (enemy.x === t.x && enemy.y === t.y) enemy.alive = false;
     });
@@ -75,6 +82,7 @@ function updateBombs() {
   explosions = explosions.filter(e => --e.timer > 0);
 }
 
+/* ===== 敵AI ===== */
 function enemyAI() {
   if (!enemy.alive) return;
 
@@ -100,4 +108,15 @@ function enemyAI() {
   } else if (!bombs.some(b => b.owner === "enemy")) {
     bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
   }
+}
+
+/* ===== ゲームループ ===== */
+function gameLoop() {
+  if (!gameStarted || gamePaused || gameOver) return;
+
+  updateBombs();
+  enemyAI();
+  render(); // ← render.js の描画関数
+
+  requestAnimationFrame(gameLoop);
 }
