@@ -14,4 +14,5 @@ const messageBox = document.getElementById("messageBox");
 const messageText = document.getElementById("messageText");
 const retryButton = document.getElementById("retryButton");
 
+// 初期状態でメッセージボックスは非表示
 messageBox.classList.add("hidden");
