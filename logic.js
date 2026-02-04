@@ -25,7 +25,8 @@ function handleKey(key) {
     player.y = ny;
   }
 
-  if (key === " " && !bombs.some(b => b.owner === "player")) {
+  if (key === " " &&
+      bombs.filter(b => b.owner === "player").length < maxBombs) {
     bombs.push({ x: player.x, y: player.y, timer: 120, owner: "player" });
   }
 }
@@ -40,7 +41,7 @@ function canMove(x, y) {
 function explosionTiles(b) {
   const tiles = [{ x: b.x, y: b.y }];
   for (const [dx, dy] of DIRS) {
-    for (let i = 1; i <= 2; i++) {
+    for (let i = 1; i <= firePower; i++) {
       const x = b.x + dx * i;
       const y = b.y + dy * i;
       if (!map[y] || map[y][x] === undefined) break;
@@ -70,7 +71,13 @@ function updateBombs() {
     explosions.push({ tiles, timer: 40 });
 
     tiles.forEach(t => {
-      if (map[t.y][t.x] === 2) map[t.y][t.x] = 0;
+      if (map[t.y][t.x] === 2) {
+        map[t.y][t.x] = 0;
+
+        const item = items.find(it => it.x === t.x && it.y === t.y);
+        if (item) item.visible = true;
+      }
+
       if (player.x === t.x && player.y === t.y) endGame("You Lose…");
       if (enemy.x === t.x && enemy.y === t.y) enemy.alive = false;
     });
@@ -81,7 +88,28 @@ function updateBombs() {
   explosions = explosions.filter(e => --e.timer > 0);
 }
 
-/* ===== A* 最短経路探索 ===== */
+/* ===== アイテム取得 ===== */
+function updateItems() {
+  items.forEach(item => {
+    if (!item.visible) return;
+
+    // プレイヤー取得
+    if (player.x === item.x && player.y === item.y) {
+      if (item.type === "fire") firePower++;
+      if (item.type === "bomb") maxBombs++;
+      item.visible = false;
+    }
+
+    // 敵取得
+    if (enemy.x === item.x && enemy.y === item.y) {
+      if (item.type === "fire") firePower++;
+      if (item.type === "bomb") maxBombs++;
+      item.visible = false;
+    }
+  });
+}
+
+/* ===== A* ===== */
 function findPath(start, goal) {
   const open = [start];
   const came = {};
@@ -124,12 +152,11 @@ function findPath(start, goal) {
   return null;
 }
 
-/* ===== 壊せる壁を探す ===== */
+/* ===== 壁破壊ターゲット ===== */
 function findBreakableWallTowardsPlayer() {
   const dx = Math.sign(player.x - enemy.x);
   const dy = Math.sign(player.y - enemy.y);
 
-  // プレイヤー方向にある壊せる壁を探す
   const tx = enemy.x + dx;
   const ty = enemy.y + dy;
 
@@ -152,7 +179,7 @@ function enemyAI() {
 
   const danger = dangerTiles();
 
-  // 1. 危険地帯なら逃げる
+  // 危険回避
   if (danger.has(`${enemy.x},${enemy.y}`)) {
     const safeMoves = DIRS
       .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
@@ -166,7 +193,21 @@ function enemyAI() {
     }
   }
 
-  // 2. A* でプレイヤーへ最短経路
+  // アイテムが見えていたら拾いに行く
+  const visibleItems = items.filter(it => it.visible);
+  if (visibleItems.length) {
+    const target = visibleItems[0];
+    const path = findPath(enemy, target);
+
+    if (path && path.length > 0) {
+      const next = path[0];
+      enemy.x = next.x;
+      enemy.y = next.y;
+      return;
+    }
+  }
+
+  // A* でプレイヤー追跡
   const path = findPath(enemy, player);
 
   if (path && path.length > 0) {
@@ -176,11 +217,10 @@ function enemyAI() {
     return;
   }
 
-  // 3. A* で道が見つからない → 壁破壊モード
+  // 壁破壊モード
   const wall = findBreakableWallTowardsPlayer();
 
   if (wall) {
-    // 壁の隣に移動
     const dx = Math.sign(wall.x - enemy.x);
     const dy = Math.sign(wall.y - enemy.y);
 
@@ -192,7 +232,6 @@ function enemyAI() {
       enemy.y = ny;
     }
 
-    // 壁の隣に来たら爆弾設置
     if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
       if (!bombs.some(b => b.owner === "enemy")) {
         bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
@@ -202,7 +241,7 @@ function enemyAI() {
     return;
   }
 
-  // 4. 何もできないときはランダム移動
+  // ランダム移動
   const moves = DIRS
     .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
     .filter(p => canMove(p.x, p.y));
@@ -219,6 +258,7 @@ function gameLoop() {
   if (!gameStarted || gamePaused || gameOver) return;
 
   updateBombs();
+  updateItems();
   enemyAI();
   draw();
 
