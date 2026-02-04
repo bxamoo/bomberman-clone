@@ -135,9 +135,9 @@ function enemyAI() {
 
   /* ===== A* でターゲットへ移動 ===== */
   const path = findPath(enemy, currentTarget);
-  if (!path || path.length === 0) return;
+  if (!path || path.length < 2) return; // ★ ここが重要
 
-  let next = path[0];
+  let next = path[1]; // ★ 正しい次の1歩
   let dx = next.x - enemy.x;
   let dy = next.y - enemy.y;
 
