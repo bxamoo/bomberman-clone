@@ -29,8 +29,17 @@ function hasSafeEscapeRouteFromBomb(bx, by) {
       !explosion.has(`${p.x},${p.y}`)
     );
 
-  // 逃げ道が2つ以上あるときだけ安全
-  return safe.length >= 2;
+  // 逃げ道が1つ以上あればOK（慎重すぎるのを緩和）
+  if (safe.length === 0) return false;
+
+  // 逃げ道の先が行き止まりでないか確認
+  return safe.some(p => {
+    return DIRS.some(([dx, dy]) => {
+      const nx = p.x + dx;
+      const ny = p.y + dy;
+      return canMove(nx, ny);
+    });
+  });
 }
 
 /* ===== 敵AI ===== */
@@ -73,17 +82,7 @@ function enemyAI() {
     }
   }
 
-  /* ===== 3. プレイヤー追跡 ===== */
-  const path = findPath(enemy, player);
-
-  if (path && path.length > 0) {
-    const next = path[0];
-    enemy.x = next.x;
-    enemy.y = next.y;
-    return;
-  }
-
-  /* ===== 4. 壁破壊モード ===== */
+  /* ===== 3. 壁破壊モード（優先度を上げた） ===== */
   let wall = findBreakableWallTowardsPlayer();
   if (!wall) wall = findNearestBreakableWall(enemy);
 
@@ -116,7 +115,7 @@ function enemyAI() {
           if (!bombs.some(b => b.owner === "enemy") &&
               bombs.filter(b => b.owner === "enemy").length < enemyStats.maxBombs) {
 
-            // 爆弾を置く前に「爆風シミュレーション」で安全確認
+            // 爆弾を置く前に安全確認（緩和版）
             if (hasSafeEscapeRouteFromBomb(enemy.x, enemy.y)) {
 
               // 爆弾設置
@@ -157,6 +156,15 @@ function enemyAI() {
 
       return;
     }
+  }
+
+  /* ===== 4. プレイヤー追跡（優先度を下げた） ===== */
+  const chase = findPath(enemy, player);
+  if (chase && chase.length > 0) {
+    const next = chase[0];
+    enemy.x = next.x;
+    enemy.y = next.y;
+    return;
   }
 
   /* ===== 5. 目的がないときは待機 ===== */
