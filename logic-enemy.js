@@ -91,12 +91,29 @@ function enemyAI() {
   if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
 
     if (!bombs.some(b => b.owner === "enemy")) {
+
       const bx = enemy.x;
       const by = enemy.y;
 
+      // ★ 爆弾を置く前に逃げ道チェック（自爆防止の核心）
+      const explosion = simulateExplosion(bx, by, enemyStats.firePower);
+      const safeMoves = DIRS
+        .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+        .filter(p => canMove(p.x, p.y) && !explosion.has(`${p.x},${p.y}`));
+
+      if (safeMoves.length === 0) {
+        // 逃げられないので爆弾を置かない
+        return;
+      }
+
+      // 爆弾設置
       bombs.push({ x: bx, y: by, timer: 120, owner: "enemy" });
 
-      escapeFromBomb(bx, by);
+      // 逃げる
+      const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+      enemy.x = m.x;
+      enemy.y = m.y;
+
       return;
     }
   }
