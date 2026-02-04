@@ -1,3 +1,38 @@
+/* ===== 爆風シミュレーション ===== */
+function simulateExplosion(x, y, power) {
+  const tiles = new Set();
+  tiles.add(`${x},${y}`);
+
+  for (const [dx, dy] of DIRS) {
+    for (let i = 1; i <= power; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+
+      if (!map[ny] || map[ny][nx] === undefined) break;
+
+      tiles.add(`${nx},${ny}`);
+
+      if (map[ny][nx] === 1) break; // 固定壁で止まる
+    }
+  }
+  return tiles;
+}
+
+/* ===== 爆弾を置いたとき安全に逃げられるか ===== */
+function hasSafeEscapeRouteFromBomb(bx, by) {
+  const explosion = simulateExplosion(bx, by, enemyStats.firePower);
+
+  const safe = DIRS
+    .map(([dx, dy]) => ({ x: bx + dx, y: by + dy }))
+    .filter(p =>
+      canMove(p.x, p.y) &&
+      !explosion.has(`${p.x},${p.y}`)
+    );
+
+  // 逃げ道が2つ以上あるときだけ安全
+  return safe.length >= 2;
+}
+
 /* ===== 敵AI ===== */
 function enemyAI() {
   if (!enemy.alive) return;
@@ -77,27 +112,29 @@ function enemyAI() {
         /* ===== 壁の隣に到達したら爆弾設置 ===== */
         if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
 
-          // すでに爆弾があるなら置かない
           if (!bombs.some(b => b.owner === "enemy") &&
               bombs.filter(b => b.owner === "enemy").length < enemyStats.maxBombs) {
 
-            // 爆弾を置く前に逃げ道チェック（袋小路防止）
-            const dangerNow = dangerTiles();
-            const safeMoves = DIRS
-              .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
-              .filter(p =>
-                canMove(p.x, p.y) &&
-                !dangerNow.has(`${p.x},${p.y}`)
-              );
+            // 爆弾を置く前に「爆風シミュレーション」で安全確認
+            if (hasSafeEscapeRouteFromBomb(enemy.x, enemy.y)) {
 
-            // 逃げ道が2つ以上あるときだけ爆弾を置く
-            if (safeMoves.length >= 2) {
+              // 爆弾設置
               bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
 
-              // 即逃げる
-              const escape = safeMoves[Math.floor(Math.random() * safeMoves.length)];
-              enemy.x = escape.x;
-              enemy.y = escape.y;
+              // 爆風外の安全地帯へ逃げる
+              const explosion = simulateExplosion(enemy.x, enemy.y, enemyStats.firePower);
+              const safeMoves = DIRS
+                .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+                .filter(p =>
+                  canMove(p.x, p.y) &&
+                  !explosion.has(`${p.x},${p.y}`)
+                );
+
+              if (safeMoves.length > 0) {
+                const escape = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+                enemy.x = escape.x;
+                enemy.y = escape.y;
+              }
             }
           }
         }
@@ -107,6 +144,6 @@ function enemyAI() {
     }
   }
 
-  /* ===== 5. 目的がないときは待機（動かない） ===== */
+  /* ===== 5. 目的がないときは待機 ===== */
   return;
 }
