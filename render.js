@@ -10,6 +10,7 @@ function drawChar(x, y, color) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // 壁
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       if (map[y][x] === 1) ctx.fillStyle = "#666";
@@ -18,6 +19,17 @@ function draw() {
     }
   }
 
+  // アイテム
+  items.forEach(item => {
+    if (!item.visible) return;
+
+    ctx.fillStyle = item.type === "fire" ? "yellow" : "blue";
+    ctx.beginPath();
+    ctx.arc(item.x * TILE + 16, item.y * TILE + 16, 10, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 爆弾
   bombs.forEach(b => {
     ctx.fillStyle = "orange";
     ctx.beginPath();
@@ -25,6 +37,7 @@ function draw() {
     ctx.fill();
   });
 
+  // 爆風
   explosions.forEach(e =>
     e.tiles.forEach(t => {
       const cx = t.x * TILE + 16;
