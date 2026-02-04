@@ -51,6 +51,7 @@ function enemyAI() {
   /* ===== 4. 壁破壊モード ===== */
   let wall = findBreakableWallTowardsPlayer();
 
+  // プレイヤー方向に壁がない → 最も近い壊せる壁を探す
   if (!wall) {
     wall = findNearestBreakableWall(enemy);
   }
@@ -67,10 +68,36 @@ function enemyAI() {
       enemy.y = ny;
     }
 
+    /* ===== 爆弾設置 → 即回避（自爆防止） ===== */
     if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
+
+      // すでに爆弾があるなら置かない
       if (!bombs.some(b => b.owner === "enemy")) {
+
+        // 爆弾を置く前に逃げ道を確認
+        const dangerNow = dangerTiles();
+        const safeMoves = DIRS
+          .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+          .filter(p =>
+            canMove(p.x, p.y) &&
+            !dangerNow.has(`${p.x},${p.y}`)
+          );
+
+        // 逃げ道がない → 爆弾を置かない（自爆防止）
+        if (safeMoves.length === 0) {
+          return;
+        }
+
+        // 爆弾設置
         bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+
+        // 爆弾を置いた瞬間に安全地帯へ逃げる
+        const escape = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+        enemy.x = escape.x;
+        enemy.y = escape.y;
       }
+
+      return;
     }
 
     return;
