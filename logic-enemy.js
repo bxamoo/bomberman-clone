@@ -138,15 +138,15 @@ function enemyAI() {
     }
   }
 
-  /* ===== A* の次の1歩（path[1] を使う） ===== */
-  const next = path[1]; // ← ★ これが最重要修正
-  if (!next) return;
+/* ===== A* の次の1歩 ===== */
+const next = path[0];   // ← これが正しい
+if (!next) return;
 
-  if (canMove(next.x, next.y)) {
-    enemy.x = next.x;
-    enemy.y = next.y;
-    return;
-  }
+if (canMove(next.x, next.y)) {
+  enemy.x = next.x;
+  enemy.y = next.y;
+  return;
+}
 
   /* ===== 回り込み ===== */
   const dx = Math.sign(target.x - enemy.x);
