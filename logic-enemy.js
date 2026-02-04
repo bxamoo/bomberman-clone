@@ -117,7 +117,7 @@ function enemyAI() {
     triedWalls.push(wall);
   }
 
-  /* ===== 壁の隣に来たら爆弾（target ではなく wall で判定） ===== */
+  /* ===== 壁の隣に来たら爆弾 ===== */
   const distToWall = Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y);
   if (distToWall === 1) {
 
@@ -151,18 +151,25 @@ function enemyAI() {
   let dx = next.x - enemy.x;
   let dy = next.y - enemy.y;
 
-  /* ===== 逆方向禁止（往復運動防止） ===== */
+  /* ===== 逆方向禁止（弱め版） ===== */
   if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
 
     const alternatives = DIRS
-      .map(([adx, ady]) => ({ x: enemy.x + adx, y: enemy.y + ady, dx: adx, dy: ady }))
+      .map(([adx, ady]) => ({
+        x: enemy.x + adx,
+        y: enemy.y + ady,
+        dx: adx,
+        dy: ady,
+        dist: Math.abs((enemy.x + adx) - target.x) + Math.abs((enemy.y + ady) - target.y)
+      }))
       .filter(p =>
         canMove(p.x, p.y) &&
         !(p.dx === -lastMove.dx && p.dy === -lastMove.dy)
-      );
+      )
+      .sort((a, b) => a.dist - b.dist);
 
     if (alternatives.length > 0) {
-      const m = alternatives[Math.floor(Math.random() * alternatives.length)];
+      const m = alternatives[0];
       enemy.x = m.x;
       enemy.y = m.y;
       lastMove = { dx: m.dx, dy: m.dy };
