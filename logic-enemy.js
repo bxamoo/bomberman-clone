@@ -10,7 +10,7 @@ function enemyAI() {
 
   const danger = dangerTiles();
 
-  // 危険回避
+  /* ===== 1. 危険回避 ===== */
   if (danger.has(`${enemy.x},${enemy.y}`)) {
     const safeMoves = DIRS
       .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
@@ -24,7 +24,7 @@ function enemyAI() {
     }
   }
 
-  // アイテム探索
+  /* ===== 2. アイテム探索 ===== */
   const visibleItems = items.filter(it => it.visible);
   if (visibleItems.length) {
     const target = visibleItems[0];
@@ -38,7 +38,7 @@ function enemyAI() {
     }
   }
 
-  // A* でプレイヤー追跡
+  /* ===== 3. プレイヤー追跡 ===== */
   const path = findPath(enemy, player);
 
   if (path && path.length > 0) {
@@ -48,8 +48,12 @@ function enemyAI() {
     return;
   }
 
-  // 壁破壊モード
-  const wall = findBreakableWallTowardsPlayer();
+  /* ===== 4. 壁破壊モード ===== */
+  let wall = findBreakableWallTowardsPlayer();
+
+  if (!wall) {
+    wall = findNearestBreakableWall(enemy);
+  }
 
   if (wall) {
     const dx = Math.sign(wall.x - enemy.x);
@@ -72,7 +76,7 @@ function enemyAI() {
     return;
   }
 
-  // ランダム移動
+  /* ===== 5. ランダム移動 ===== */
   const moves = DIRS
     .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
     .filter(p => canMove(p.x, p.y));
