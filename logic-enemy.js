@@ -1,16 +1,18 @@
 /* ===== 前回の移動方向 ===== */
 let lastMove = null;
 
+/* ===== 現在狙っている壁と隣接マス ===== */
+let currentWall = null;
+let currentTarget = null;
+
 /* ===== 壊せる壁を自力で探す ===== */
-function findAnyBreakableWall(exclude = null) {
+function findAnyBreakableWall() {
   let best = null;
   let bestDist = Infinity;
 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       if (map[y][x] === 2) {
-        if (exclude && exclude.some(w => w.x === x && w.y === y)) continue;
-
         const d = Math.abs(enemy.x - x) + Math.abs(enemy.y - y);
         if (d < bestDist) {
           bestDist = d;
@@ -95,30 +97,17 @@ function enemyAI() {
     }
   }
 
-  /* ===== 壁探索 ===== */
-  let triedWalls = [];
-  let wall = null;
-  let target = null;
-  let path = null;
+  /* ===== 壁ターゲットが無い or 壊れたら再設定 ===== */
+  if (!currentWall || map[currentWall.y][currentWall.x] !== 2) {
+    currentWall = findAnyBreakableWall();
+    if (!currentWall) return;
 
-  while (true) {
-    wall = findAnyBreakableWall(triedWalls);
-    if (!wall) return;
-
-    target = findAdjacentTarget(wall);
-    if (!target) {
-      triedWalls.push(wall);
-      continue;
-    }
-
-    path = findPath(enemy, target);
-    if (path && path.length > 0) break;
-
-    triedWalls.push(wall);
+    currentTarget = findAdjacentTarget(currentWall);
+    if (!currentTarget) return;
   }
 
   /* ===== 壁の隣に来たら爆弾 ===== */
-  const distToWall = Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y);
+  const distToWall = Math.abs(enemy.x - currentWall.x) + Math.abs(enemy.y - currentWall.y);
   if (distToWall === 1) {
 
     if (!bombs.some(b => b.owner === "enemy")) {
@@ -144,14 +133,15 @@ function enemyAI() {
     }
   }
 
-  /* ===== A* の次の1歩 ===== */
-  let next = path[0];
-  if (!next) return;
+  /* ===== A* でターゲットへ移動 ===== */
+  const path = findPath(enemy, currentTarget);
+  if (!path || path.length === 0) return;
 
+  let next = path[0];
   let dx = next.x - enemy.x;
   let dy = next.y - enemy.y;
 
-  /* ===== 逆方向禁止（弱め版） ===== */
+  /* ===== 逆方向禁止（弱め） ===== */
   if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
 
     const alternatives = DIRS
@@ -160,12 +150,9 @@ function enemyAI() {
         y: enemy.y + ady,
         dx: adx,
         dy: ady,
-        dist: Math.abs((enemy.x + adx) - target.x) + Math.abs((enemy.y + ady) - target.y)
+        dist: Math.abs((enemy.x + adx) - currentTarget.x) + Math.abs((enemy.y + ady) - currentTarget.y)
       }))
-      .filter(p =>
-        canMove(p.x, p.y) &&
-        !(p.dx === -lastMove.dx && p.dy === -lastMove.dy)
-      )
+      .filter(p => canMove(p.x, p.y))
       .sort((a, b) => a.dist - b.dist);
 
     if (alternatives.length > 0) {
