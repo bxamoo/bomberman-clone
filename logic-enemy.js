@@ -17,7 +17,7 @@ function simulateExplosion(x, y, power) {
   return tiles;
 }
 
-/* ===== 爆風から逃げる ===== */
+/* ===== 爆弾から逃げる（爆弾位置 bx,by を基準に、敵の位置から逃げる） ===== */
 function escapeFromBomb(bx, by) {
   const explosion = simulateExplosion(bx, by, enemyStats.firePower);
 
@@ -29,7 +29,10 @@ function escapeFromBomb(bx, by) {
     const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
     enemy.x = m.x;
     enemy.y = m.y;
+    return true;
   }
+
+  return false;
 }
 
 /* ===== 壁破壊AI（メインループ） ===== */
@@ -45,11 +48,15 @@ function enemyAI() {
   /* ===== 1. 爆風にいたら逃げる ===== */
   const danger = dangerTiles();
   if (danger.has(`${enemy.x},${enemy.y}`)) {
-    escapeFromBomb(enemy.x, enemy.y);
-    return;
+    // 直近の敵爆弾を探す
+    const enemyBomb = bombs.find(b => b.owner === "enemy");
+    if (enemyBomb) {
+      escapeFromBomb(enemyBomb.x, enemyBomb.y);
+      return;
+    }
   }
 
-  /* ===== 2. 壁を探す（最優先） ===== */
+  /* ===== 2. 壊せる壁を探す（最優先） ===== */
   let wall = findBreakableWallTowardsPlayer();
   if (!wall) wall = findNearestBreakableWall(enemy);
 
@@ -63,14 +70,17 @@ function enemyAI() {
     /* ===== 2-1. 壁の隣に来たら爆弾設置 ===== */
     if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
 
-      // すでに敵の爆弾があるなら置かない
+      // 敵の爆弾がまだない場合のみ設置
       if (!bombs.some(b => b.owner === "enemy")) {
 
-        // 爆弾設置
-        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+        const bombX = enemy.x;
+        const bombY = enemy.y;
 
-        // 即逃げる
-        escapeFromBomb(enemy.x, enemy.y);
+        // 爆弾設置
+        bombs.push({ x: bombX, y: bombY, timer: 120, owner: "enemy" });
+
+        // 爆弾の位置を基準に逃げる（ここが重要）
+        escapeFromBomb(bombX, bombY);
         return;
       }
     }
@@ -99,6 +109,6 @@ function enemyAI() {
     return;
   }
 
-  /* ===== 3. 壁がない場合はその場で待機 ===== */
+  /* ===== 3. 壁がない場合は待機 ===== */
   return;
 }
