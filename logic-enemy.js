@@ -81,13 +81,16 @@ function escapeFromBomb(bx, by) {
 function enemyAI() {
   if (!enemy.alive) return;
 
+  // ===== 開始直後の硬直を防ぐ =====
+  if (gameTime < 30) enemyCooldown = 2;
+
   if (enemyCooldown > 0) {
     enemyCooldown--;
     return;
   }
   enemyCooldown = 10;
 
-  /* ===== 危険回避 ===== */
+  // ===== 危険回避 =====
   const danger = dangerTiles();
   if (danger.has(`${enemy.x},${enemy.y}`)) {
     const enemyBomb = bombs.find(b => b.owner === "enemy");
@@ -97,16 +100,27 @@ function enemyAI() {
     }
   }
 
-  /* ===== 壁ターゲットが無い or 壊れたら再設定 ===== */
+  // ===== 壁ターゲットの再設定 =====
   if (!currentWall || map[currentWall.y][currentWall.x] !== 2) {
     currentWall = findAnyBreakableWall();
-    if (!currentWall) return;
+
+    // 壁が無い → ランダム移動で停滞回避
+    if (!currentWall) {
+      randomMove();
+      return;
+    }
 
     currentTarget = findAdjacentTarget(currentWall);
-    if (!currentTarget) return;
+
+    // 隣接マスが無い → 別の壁を探す
+    if (!currentTarget) {
+      currentWall = null;
+      randomMove();
+      return;
+    }
   }
 
-  /* ===== 壁の隣に来たら爆弾 ===== */
+  // ===== 壁の隣に来たら爆弾 =====
   const distToWall = Math.abs(enemy.x - currentWall.x) + Math.abs(enemy.y - currentWall.y);
   if (distToWall === 1) {
 
@@ -133,15 +147,20 @@ function enemyAI() {
     }
   }
 
-  /* ===== A* でターゲットへ移動 ===== */
+  // ===== A* でターゲットへ移動 =====
   const path = findPath(enemy, currentTarget);
-  if (!path || path.length < 2) return; // ★ ここが重要
 
-  let next = path[1]; // ★ 正しい次の1歩
-  let dx = next.x - enemy.x;
-  let dy = next.y - enemy.y;
+  if (!path || path.length < 2) {
+    // パスが無い → ランダム移動で停滞回避
+    randomMove();
+    return;
+  }
 
-  /* ===== 逆方向禁止（弱め） ===== */
+  const next = path[1];
+  const dx = next.x - enemy.x;
+  const dy = next.y - enemy.y;
+
+  // ===== 逆方向禁止（弱め） =====
   if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
 
     const alternatives = DIRS
@@ -164,11 +183,27 @@ function enemyAI() {
     }
   }
 
-  /* ===== 正常に進む ===== */
+  // ===== 正常に進む =====
   if (canMove(next.x, next.y)) {
     enemy.x = next.x;
     enemy.y = next.y;
     lastMove = { dx, dy };
     return;
   }
+
+  // ===== 最後の保険：ランダム移動 =====
+  randomMove();
+}
+
+function randomMove() {
+  const moves = DIRS
+    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
+    .filter(p => canMove(p.x, p.y));
+
+  if (moves.length === 0) return;
+
+  const m = moves[Math.floor(Math.random() * moves.length)];
+  enemy.x = m.x;
+  enemy.y = m.y;
+  lastMove = { dx: m.dx, dy: m.dy };
 }
