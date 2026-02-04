@@ -150,7 +150,7 @@ function enemyAI() {
   let dx = next.x - enemy.x;
   let dy = next.y - enemy.y;
 
-  /* ===== 逆方向禁止（往復運動防止の核心） ===== */
+  /* ===== 逆方向禁止（往復運動防止） ===== */
   if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
 
     const alternatives = DIRS
