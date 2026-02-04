@@ -117,8 +117,9 @@ function enemyAI() {
     triedWalls.push(wall);
   }
 
-  /* ===== ターゲットに到達したら爆弾 ===== */
-  if (enemy.x === target.x && enemy.y === target.y) {
+  /* ===== 壁の隣に来たら爆弾（target ではなく wall で判定） ===== */
+  const distToWall = Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y);
+  if (distToWall === 1) {
 
     if (!bombs.some(b => b.owner === "enemy")) {
 
