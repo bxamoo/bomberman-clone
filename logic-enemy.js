@@ -59,7 +59,6 @@ function enemyAI() {
       .filter(p => canMove(p.x, p.y));
 
     if (neighbors.length > 0) {
-      // 一番近い隣接マスを選ぶ
       neighbors.sort((a, b) => {
         const da = Math.abs(a.x - enemy.x) + Math.abs(a.y - enemy.y);
         const db = Math.abs(b.x - enemy.x) + Math.abs(b.y - enemy.y);
@@ -77,7 +76,8 @@ function enemyAI() {
         // 壁の隣に到達したら爆弾設置
         if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
 
-          if (!bombs.some(b => b.owner === "enemy")) {
+          if (!bombs.some(b => b.owner === "enemy") &&
+              bombs.filter(b => b.owner === "enemy").length < enemyStats.maxBombs) {
 
             // 爆弾を置く前に逃げ道チェック
             const dangerNow = dangerTiles();
