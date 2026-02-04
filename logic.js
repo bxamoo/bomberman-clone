@@ -25,7 +25,6 @@ function handleKey(key) {
     player.y = ny;
   }
 
-  // スペースで爆弾設置（1個制限）
   if (key === " " && !bombs.some(b => b.owner === "player")) {
     bombs.push({ x: player.x, y: player.y, timer: 120, owner: "player" });
   }
@@ -46,7 +45,7 @@ function explosionTiles(b) {
       const y = b.y + dy * i;
       if (!map[y] || map[y][x] === undefined) break;
       tiles.push({ x, y });
-      if (map[y][x] === 1) break; // 固定壁で止まる
+      if (map[y][x] === 1) break;
     }
   }
   return tiles;
@@ -71,7 +70,7 @@ function updateBombs() {
     explosions.push({ tiles, timer: 40 });
 
     tiles.forEach(t => {
-      if (map[t.y][t.x] === 2) map[t.y][t.x] = 0; // 壊せる壁破壊
+      if (map[t.y][t.x] === 2) map[t.y][t.x] = 0;
       if (player.x === t.x && player.y === t.y) endGame("You Lose…");
       if (enemy.x === t.x && enemy.y === t.y) enemy.alive = false;
     });
@@ -116,7 +115,9 @@ function gameLoop() {
 
   updateBombs();
   enemyAI();
-  render(); // ← render.js の描画関数
+  draw();
+
+  if (!enemy.alive && !gameOver) endGame("You Win!");
 
   requestAnimationFrame(gameLoop);
 }
