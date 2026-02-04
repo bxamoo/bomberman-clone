@@ -59,6 +59,7 @@ function enemyAI() {
       .filter(p => canMove(p.x, p.y));
 
     if (neighbors.length > 0) {
+      // 一番近い隣接マスを選ぶ
       neighbors.sort((a, b) => {
         const da = Math.abs(a.x - enemy.x) + Math.abs(a.y - enemy.y);
         const db = Math.abs(b.x - enemy.x) + Math.abs(b.y - enemy.y);
@@ -73,13 +74,14 @@ function enemyAI() {
         enemy.x = next.x;
         enemy.y = next.y;
 
-        // 壁の隣に到達したら爆弾設置
+        /* ===== 壁の隣に到達したら爆弾設置 ===== */
         if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
 
+          // すでに爆弾があるなら置かない
           if (!bombs.some(b => b.owner === "enemy") &&
               bombs.filter(b => b.owner === "enemy").length < enemyStats.maxBombs) {
 
-            // 爆弾を置く前に逃げ道チェック
+            // 爆弾を置く前に逃げ道チェック（袋小路防止）
             const dangerNow = dangerTiles();
             const safeMoves = DIRS
               .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
@@ -88,7 +90,8 @@ function enemyAI() {
                 !dangerNow.has(`${p.x},${p.y}`)
               );
 
-            if (safeMoves.length > 0) {
+            // 逃げ道が2つ以上あるときだけ爆弾を置く
+            if (safeMoves.length >= 2) {
               bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
 
               // 即逃げる
@@ -104,14 +107,6 @@ function enemyAI() {
     }
   }
 
-  /* ===== 5. ランダム移動 ===== */
-  const moves = DIRS
-    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
-    .filter(p => canMove(p.x, p.y));
-
-  if (moves.length) {
-    const m = moves[Math.floor(Math.random() * moves.length)];
-    enemy.x = m.x;
-    enemy.y = m.y;
-  }
+  /* ===== 5. 目的がないときは待機（動かない） ===== */
+  return;
 }
