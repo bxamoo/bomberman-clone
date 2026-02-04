@@ -37,14 +37,13 @@ function resetStage() {
   explosions = [];
   enemyCooldown = 0;
 
+  // ★ gameStarted は絶対に触らない！
   gameOver = false;
   gamePaused = false;
 }
 
 /* ===== ゲーム開始処理 ===== */
 function startGame() {
-  if (gameStarted) return;
-
   gameStarted = true;
   gamePaused = false;
   gameOver = false;
