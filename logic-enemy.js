@@ -1,3 +1,6 @@
+/* ===== 前回の移動方向 ===== */
+let lastMove = null;
+
 /* ===== 壊せる壁を自力で探す ===== */
 function findAnyBreakableWall(exclude = null) {
   let best = null;
@@ -5,7 +8,7 @@ function findAnyBreakableWall(exclude = null) {
 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      if (map[y][x] === 2) { // 壊せる壁
+      if (map[y][x] === 2) {
         if (exclude && exclude.some(w => w.x === x && w.y === y)) continue;
 
         const d = Math.abs(enemy.x - x) + Math.abs(enemy.y - y);
@@ -59,13 +62,14 @@ function escapeFromBomb(bx, by) {
   const explosion = simulateExplosion(bx, by, enemyStats.firePower);
 
   const safeMoves = DIRS
-    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
     .filter(p => canMove(p.x, p.y) && !explosion.has(`${p.x},${p.y}`));
 
   if (safeMoves.length > 0) {
     const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
     enemy.x = m.x;
     enemy.y = m.y;
+    lastMove = { dx: m.dx, dy: m.dy };
     return true;
   }
   return false;
@@ -91,7 +95,7 @@ function enemyAI() {
     }
   }
 
-  /* ===== 壁探索（到達不能な壁を除外する） ===== */
+  /* ===== 壁探索 ===== */
   let triedWalls = [];
   let wall = null;
   let target = null;
@@ -99,7 +103,7 @@ function enemyAI() {
 
   while (true) {
     wall = findAnyBreakableWall(triedWalls);
-    if (!wall) return; // 壁がない
+    if (!wall) return;
 
     target = findAdjacentTarget(wall);
     if (!target) {
@@ -108,7 +112,7 @@ function enemyAI() {
     }
 
     path = findPath(enemy, target);
-    if (path && path.length > 1) break; // ★ path[1] が存在することを確認
+    if (path && path.length > 0) break;
 
     triedWalls.push(wall);
   }
@@ -123,7 +127,7 @@ function enemyAI() {
 
       const explosion = simulateExplosion(bx, by, enemyStats.firePower);
       const safeMoves = DIRS
-        .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+        .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
         .filter(p => canMove(p.x, p.y) && !explosion.has(`${p.x},${p.y}`));
 
       if (safeMoves.length === 0) return;
@@ -133,35 +137,43 @@ function enemyAI() {
       const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
       enemy.x = m.x;
       enemy.y = m.y;
+      lastMove = { dx: m.dx, dy: m.dy };
 
       return;
     }
   }
 
-/* ===== A* の次の1歩 ===== */
-const next = path[0];   // ← これが正しい
-if (!next) return;
+  /* ===== A* の次の1歩 ===== */
+  let next = path[0];
+  if (!next) return;
 
-if (canMove(next.x, next.y)) {
-  enemy.x = next.x;
-  enemy.y = next.y;
-  return;
-}
+  let dx = next.x - enemy.x;
+  let dy = next.y - enemy.y;
 
-  /* ===== 回り込み ===== */
-  const dx = Math.sign(target.x - enemy.x);
-  const dy = Math.sign(target.y - enemy.y);
+  /* ===== 逆方向禁止（往復運動防止の核心） ===== */
+  if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
 
-  const sideMoves = [
-    { x: enemy.x + dy, y: enemy.y + dx },
-    { x: enemy.x - dy, y: enemy.y - dx }
-  ];
+    const alternatives = DIRS
+      .map(([adx, ady]) => ({ x: enemy.x + adx, y: enemy.y + ady, dx: adx, dy: ady }))
+      .filter(p =>
+        canMove(p.x, p.y) &&
+        !(p.dx === -lastMove.dx && p.dy === -lastMove.dy)
+      );
 
-  for (const m of sideMoves) {
-    if (canMove(m.x, m.y)) {
+    if (alternatives.length > 0) {
+      const m = alternatives[Math.floor(Math.random() * alternatives.length)];
       enemy.x = m.x;
       enemy.y = m.y;
+      lastMove = { dx: m.dx, dy: m.dy };
       return;
     }
+  }
+
+  /* ===== 正常に進む ===== */
+  if (canMove(next.x, next.y)) {
+    enemy.x = next.x;
+    enemy.y = next.y;
+    lastMove = { dx, dy };
+    return;
   }
 }
