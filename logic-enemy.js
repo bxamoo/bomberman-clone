@@ -108,7 +108,7 @@ function enemyAI() {
     }
 
     path = findPath(enemy, target);
-    if (path && path.length > 0) break;
+    if (path && path.length > 1) break; // ★ path[1] が存在することを確認
 
     triedWalls.push(wall);
   }
@@ -138,8 +138,10 @@ function enemyAI() {
     }
   }
 
-  /* ===== A* の次の1歩 ===== */
-  const next = path[0];
+  /* ===== A* の次の1歩（path[1] を使う） ===== */
+  const next = path[1]; // ← ★ これが最重要修正
+  if (!next) return;
+
   if (canMove(next.x, next.y)) {
     enemy.x = next.x;
     enemy.y = next.y;
