@@ -89,23 +89,61 @@ function enemyAI() {
     enemyCooldown--;
     return;
   }
-  enemyCooldown = 12;
+  enemyCooldown = 10;
 
   const danger = dangerTiles();
 
+  // 1. 危険地帯なら逃げる
+  if (danger.has(`${enemy.x},${enemy.y}`)) {
+    const safeMoves = DIRS
+      .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+      .filter(p => canMove(p.x, p.y) && !danger.has(`${p.x},${p.y}`));
+
+    if (safeMoves.length) {
+      const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+      enemy.x = m.x;
+      enemy.y = m.y;
+      return;
+    }
+  }
+
+  // 2. プレイヤーに近づく
   const moves = DIRS
     .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
-    .filter(p => canMove(p.x, p.y) && !danger.has(`${p.x},${p.y}`));
+    .filter(p => canMove(p.x, p.y));
 
   if (moves.length) {
     moves.sort((a, b) =>
-      Math.abs(a.x - player.x) + Math.abs(a.y - player.y) -
+      (Math.abs(a.x - player.x) + Math.abs(a.y - player.y)) -
       (Math.abs(b.x - player.x) + Math.abs(b.y - player.y))
     );
-    enemy.x = moves[0].x;
-    enemy.y = moves[0].y;
-  } else if (!bombs.some(b => b.owner === "enemy")) {
-    bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+
+    const best = moves[0];
+
+    // 3. 壁が邪魔なら壊す（壊せる壁に隣接していたら爆弾設置）
+    const dx = Math.sign(player.x - enemy.x);
+    const dy = Math.sign(player.y - enemy.y);
+    const tx = enemy.x + dx;
+    const ty = enemy.y + dy;
+
+    if (map[ty] && map[ty][tx] === 2) {
+      if (!bombs.some(b => b.owner === "enemy")) {
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+      }
+      return;
+    }
+
+    // 4. プレイヤーに近づく
+    enemy.x = best.x;
+    enemy.y = best.y;
+
+    // 5. プレイヤーが近いなら爆弾設置
+    if (
+      Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y) <= 1 &&
+      !bombs.some(b => b.owner === "enemy")
+    ) {
+      bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+    }
   }
 }
 
