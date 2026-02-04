@@ -104,6 +104,7 @@ function enemyAI() {
       const target = neighbors[0];
       const pathToWall = findPath(enemy, target);
 
+      /* ===== A* が成功した場合 ===== */
       if (pathToWall && pathToWall.length > 0) {
         const next = pathToWall[0];
         enemy.x = next.x;
@@ -141,6 +142,20 @@ function enemyAI() {
 
         return;
       }
+
+      /* ===== A* が失敗した場合（停止防止フォールバック） ===== */
+      const dx = Math.sign(wall.x - enemy.x);
+      const dy = Math.sign(wall.y - enemy.y);
+
+      const nx = enemy.x + dx;
+      const ny = enemy.y + dy;
+
+      if (canMove(nx, ny)) {
+        enemy.x = nx;
+        enemy.y = ny;
+      }
+
+      return;
     }
   }
 
