@@ -1,23 +1,69 @@
+/* ===== キャラ描画（目つき） ===== */
 function drawChar(x, y, color) {
   const cx = x * TILE + TILE / 2;
   const cy = y * TILE + TILE / 2;
+
+  // 体
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(cx, cy, 14, 0, Math.PI * 2);
   ctx.fill();
+
+  // 白目
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(cx - 5, cy - 3, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 5, cy - 3, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 黒目（くりくり）
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(cx - 5, cy - 3, 2, 0, Math.PI * 2);
+  ctx.arc(cx + 5, cy - 3, 2, 0, Math.PI * 2);
+  ctx.fill();
 }
 
+/* ===== 導火線つき爆弾 ===== */
+function drawBomb(b) {
+  const cx = b.x * TILE + TILE / 2;
+  const cy = b.y * TILE + TILE / 2;
+
+  // 本体
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 導火線
+  ctx.strokeStyle = "brown";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx + 8, cy - 8);
+  ctx.lineTo(cx + 14, cy - 14);
+  ctx.stroke();
+
+  // 火花（点滅アニメーション）
+  ctx.fillStyle = Math.random() < 0.5 ? "yellow" : "orange";
+  ctx.beginPath();
+  ctx.arc(cx + 14, cy - 14, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* ===== 描画メイン ===== */
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // マップ
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      if (map[y][x] === 1) ctx.fillStyle = "#666";
-      if (map[y][x] === 2) ctx.fillStyle = "#a66";
+      if (map[y][x] === 1) ctx.fillStyle = "#666";   // 固定壁
+      if (map[y][x] === 2) ctx.fillStyle = "#a66";   // 壊せる壁
       if (map[y][x]) ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
     }
   }
 
+  // アイテム
   items.forEach(item => {
     if (!item.visible) return;
     ctx.fillStyle = item.type === "fire" ? "yellow" : "blue";
@@ -26,13 +72,10 @@ function draw() {
     ctx.fill();
   });
 
-  bombs.forEach(b => {
-    ctx.fillStyle = "orange";
-    ctx.beginPath();
-    ctx.arc(b.x * TILE + 16, b.y * TILE + 16, 12, 0, Math.PI * 2);
-    ctx.fill();
-  });
+  // 爆弾（導火線つき）
+  bombs.forEach(b => drawBomb(b));
 
+  // 爆風
   explosions.forEach(e =>
     e.tiles.forEach(t => {
       const cx = t.x * TILE + 16;
@@ -47,10 +90,12 @@ function draw() {
     })
   );
 
+  // キャラ
   drawChar(player.x, player.y, "cyan");
   if (enemy.alive) drawChar(enemy.x, enemy.y, "red");
 }
 
+/* ===== ゲーム終了 ===== */
 function endGame(text) {
   gameOver = true;
   gamePaused = true;
@@ -72,7 +117,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-/* UI */
+/* ===== UI ===== */
 startButton.onclick = () => {
   messageBox.classList.add("hidden");
   startGame();
