@@ -11,8 +11,11 @@ function findAnyBreakableWall() {
   let bestDist = Infinity;
 
   for (let y = 0; y < ROWS; y++) {
+    const row = map[y];
+    if (!row) continue;
+
     for (let x = 0; x < COLS; x++) {
-      if (map[y][x] === 2) {
+      if (row[x] === 2) {
         const d = Math.abs(enemy.x - x) + Math.abs(enemy.y - y);
         if (d < bestDist) {
           bestDist = d;
@@ -26,6 +29,8 @@ function findAnyBreakableWall() {
 
 /* ===== 壁の隣の空きマスを探す ===== */
 function findAdjacentTarget(wall) {
+  if (!wall) return null;
+
   const candidates = DIRS
     .map(([dx, dy]) => ({ x: wall.x + dx, y: wall.y + dy }))
     .filter(p => canMove(p.x, p.y));
@@ -77,12 +82,28 @@ function escapeFromBomb(bx, by) {
   return false;
 }
 
+/* ===== ランダム移動（停滞防止） ===== */
+function randomMove() {
+  const moves = DIRS
+    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
+    .filter(p => canMove(p.x, p.y));
+
+  if (moves.length === 0) return;
+
+  const m = moves[Math.floor(Math.random() * moves.length)];
+  enemy.x = m.x;
+  enemy.y = m.y;
+  lastMove = { dx: m.dx, dy: m.dy };
+}
+
 /* ===== メインAI ===== */
 function enemyAI() {
-  if (!enemy.alive) return;
+  if (!enemy || !enemy.alive) return;
 
-  // ===== 開始直後の硬直を防ぐ =====
-  if (gameTime < 30) enemyCooldown = 2;
+  // ===== 開始直後の硬直を防ぐ（gameTime があるときだけ） =====
+  if (typeof gameTime !== "undefined" && gameTime < 30) {
+    enemyCooldown = Math.min(enemyCooldown, 2) || 2;
+  }
 
   if (enemyCooldown > 0) {
     enemyCooldown--;
@@ -101,7 +122,11 @@ function enemyAI() {
   }
 
   // ===== 壁ターゲットの再設定 =====
-  if (!currentWall || map[currentWall.y][currentWall.x] !== 2) {
+  if (
+    !currentWall ||
+    !map[currentWall.y] ||
+    map[currentWall.y][currentWall.x] !== 2
+  ) {
     currentWall = findAnyBreakableWall();
 
     // 壁が無い → ランダム移動で停滞回避
@@ -112,7 +137,7 @@ function enemyAI() {
 
     currentTarget = findAdjacentTarget(currentWall);
 
-    // 隣接マスが無い → 別の壁を探す
+    // 隣接マスが無い → 一旦リセットしてランダム移動
     if (!currentTarget) {
       currentWall = null;
       randomMove();
@@ -121,11 +146,11 @@ function enemyAI() {
   }
 
   // ===== 壁の隣に来たら爆弾 =====
-  const distToWall = Math.abs(enemy.x - currentWall.x) + Math.abs(enemy.y - currentWall.y);
+  const distToWall =
+    Math.abs(enemy.x - currentWall.x) + Math.abs(enemy.y - currentWall.y);
+
   if (distToWall === 1) {
-
     if (!bombs.some(b => b.owner === "enemy")) {
-
       const bx = enemy.x;
       const by = enemy.y;
 
@@ -162,14 +187,15 @@ function enemyAI() {
 
   // ===== 逆方向禁止（弱め） =====
   if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
-
     const alternatives = DIRS
       .map(([adx, ady]) => ({
         x: enemy.x + adx,
         y: enemy.y + ady,
         dx: adx,
         dy: ady,
-        dist: Math.abs((enemy.x + adx) - currentTarget.x) + Math.abs((enemy.y + ady) - currentTarget.y)
+        dist:
+          Math.abs((enemy.x + adx) - currentTarget.x) +
+          Math.abs((enemy.y + ady) - currentTarget.y)
       }))
       .filter(p => canMove(p.x, p.y))
       .sort((a, b) => a.dist - b.dist);
@@ -193,17 +219,4 @@ function enemyAI() {
 
   // ===== 最後の保険：ランダム移動 =====
   randomMove();
-}
-
-function randomMove() {
-  const moves = DIRS
-    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
-    .filter(p => canMove(p.x, p.y));
-
-  if (moves.length === 0) return;
-
-  const m = moves[Math.floor(Math.random() * moves.length)];
-  enemy.x = m.x;
-  enemy.y = m.y;
-  lastMove = { dx: m.dx, dy: m.dy };
 }
