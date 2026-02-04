@@ -26,7 +26,7 @@ function handleKey(key) {
   }
 
   if (key === " " &&
-      bombs.filter(b => b.owner === "player").length < maxBombs) {
+      bombs.filter(b => b.owner === "player").length < playerStats.maxBombs) {
     bombs.push({ x: player.x, y: player.y, timer: 120, owner: "player" });
   }
 }
@@ -39,9 +39,13 @@ function canMove(x, y) {
 
 /* ===== 爆風範囲 ===== */
 function explosionTiles(b) {
+  const power = b.owner === "player"
+    ? playerStats.firePower
+    : enemyStats.firePower;
+
   const tiles = [{ x: b.x, y: b.y }];
   for (const [dx, dy] of DIRS) {
-    for (let i = 1; i <= firePower; i++) {
+    for (let i = 1; i <= power; i++) {
       const x = b.x + dx * i;
       const y = b.y + dy * i;
       if (!map[y] || map[y][x] === undefined) break;
@@ -94,14 +98,14 @@ function updateItems() {
     if (!item.visible) return;
 
     if (player.x === item.x && player.y === item.y) {
-      if (item.type === "fire") firePower++;
-      if (item.type === "bomb") maxBombs++;
+      if (item.type === "fire") playerStats.firePower++;
+      if (item.type === "bomb") playerStats.maxBombs++;
       item.visible = false;
     }
 
     if (enemy.x === item.x && enemy.y === item.y) {
-      if (item.type === "fire") firePower++;
-      if (item.type === "bomb") maxBombs++;
+      if (item.type === "fire") enemyStats.firePower++;
+      if (item.type === "bomb") enemyStats.maxBombs++;
       item.visible = false;
     }
   });
