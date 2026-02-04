@@ -51,12 +51,22 @@ function explosionTiles(b) {
   return tiles;
 }
 
-/* ===== 危険タイル ===== */
+/* ===== 危険タイル（爆弾＋爆風＋爆弾の隣） ===== */
 function dangerTiles() {
   const set = new Set();
-  bombs.forEach(b =>
-    explosionTiles(b).forEach(t => set.add(`${t.x},${t.y}`))
-  );
+
+  bombs.forEach(b => {
+    // 爆風
+    explosionTiles(b).forEach(t => set.add(`${t.x},${t.y}`));
+
+    // 爆弾の隣も危険
+    DIRS.forEach(([dx, dy]) => {
+      const x = b.x + dx;
+      const y = b.y + dy;
+      set.add(`${x},${y}`);
+    });
+  });
+
   return set;
 }
 
@@ -79,6 +89,64 @@ function updateBombs() {
   }
 
   explosions = explosions.filter(e => --e.timer > 0);
+}
+
+/* ===== A* 最短経路探索 ===== */
+function findPath(start, goal) {
+  const open = [start];
+  const came = {};
+  const g = {};
+  g[`${start.x},${start.y}`] = 0;
+
+  while (open.length) {
+    open.sort((a, b) =>
+      g[`${a.x},${a.y}`] - g[`${b.x},${b.y}`]
+    );
+    const cur = open.shift();
+    const key = `${cur.x},${cur.y}`;
+
+    if (cur.x === goal.x && cur.y === goal.y) {
+      const path = [];
+      let k = key;
+      while (came[k]) {
+        const [x, y] = k.split(",").map(Number);
+        path.push({ x, y });
+        k = came[k];
+      }
+      return path.reverse();
+    }
+
+    for (const [dx, dy] of DIRS) {
+      const nx = cur.x + dx;
+      const ny = cur.y + dy;
+      const nk = `${nx},${ny}`;
+
+      if (!canMove(nx, ny)) continue;
+
+      const cost = g[key] + 1;
+      if (g[nk] === undefined || cost < g[nk]) {
+        g[nk] = cost;
+        came[nk] = key;
+        open.push({ x: nx, y: ny });
+      }
+    }
+  }
+  return null;
+}
+
+/* ===== 爆弾を置いても逃げられるか判定 ===== */
+function canEscapeAfterBomb(x, y) {
+  const danger = dangerTiles();
+  danger.add(`${x},${y}`);
+
+  for (const [dx, dy] of DIRS) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (canMove(nx, ny) && !danger.has(`${nx},${ny}`)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /* ===== 敵AI ===== */
@@ -107,40 +175,34 @@ function enemyAI() {
     }
   }
 
-  // 2. プレイヤーに近づく
-  const moves = DIRS
-    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
-    .filter(p => canMove(p.x, p.y));
+  // 2. A* でプレイヤーへ最短経路
+  const path = findPath(enemy, player);
 
-  if (moves.length) {
-    moves.sort((a, b) =>
-      (Math.abs(a.x - player.x) + Math.abs(a.y - player.y)) -
-      (Math.abs(b.x - player.x) + Math.abs(b.y - player.y))
-    );
+  if (path && path.length > 0) {
+    const next = path[0];
 
-    const best = moves[0];
-
-    // 3. 壁が邪魔なら壊す（壊せる壁に隣接していたら爆弾設置）
-    const dx = Math.sign(player.x - enemy.x);
-    const dy = Math.sign(player.y - enemy.y);
+    // 壁が邪魔なら爆弾で壊す（逃げ道があるときだけ）
+    const dx = next.x - enemy.x;
+    const dy = next.y - enemy.y;
     const tx = enemy.x + dx;
     const ty = enemy.y + dy;
 
     if (map[ty] && map[ty][tx] === 2) {
-      if (!bombs.some(b => b.owner === "enemy")) {
+      if (!bombs.some(b => b.owner === "enemy") && canEscapeAfterBomb(enemy.x, enemy.y)) {
         bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
       }
       return;
     }
 
-    // 4. プレイヤーに近づく
-    enemy.x = best.x;
-    enemy.y = best.y;
+    // 3. プレイヤーに近づく
+    enemy.x = next.x;
+    enemy.y = next.y;
 
-    // 5. プレイヤーが近いなら爆弾設置
+    // 4. プレイヤーが近いなら爆弾設置（逃げ道があるときだけ）
     if (
       Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y) <= 1 &&
-      !bombs.some(b => b.owner === "enemy")
+      !bombs.some(b => b.owner === "enemy") &&
+      canEscapeAfterBomb(enemy.x, enemy.y)
     ) {
       bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
     }
