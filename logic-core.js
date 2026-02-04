@@ -150,7 +150,7 @@ function findPath(start, goal) {
   return null;
 }
 
-/* ===== 壁破壊ターゲット ===== */
+/* ===== プレイヤー方向の壁 ===== */
 function findBreakableWallTowardsPlayer() {
   const dx = Math.sign(player.x - enemy.x);
   const dy = Math.sign(player.y - enemy.y);
@@ -163,4 +163,27 @@ function findBreakableWallTowardsPlayer() {
   }
 
   return null;
+}
+
+/* ===== 最も近い壊せる壁 ===== */
+function findNearestBreakableWall(start) {
+  const walls = [];
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (map[y][x] === 2) {
+        walls.push({ x, y });
+      }
+    }
+  }
+
+  if (walls.length === 0) return null;
+
+  walls.sort((a, b) => {
+    const da = Math.abs(a.x - start.x) + Math.abs(a.y - start.y);
+    const db = Math.abs(b.x - start.x) + Math.abs(b.y - start.y);
+    return da - db;
+  });
+
+  return walls[0];
 }
