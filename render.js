@@ -58,5 +58,5 @@ startButton.onclick = () => {
 
 retryButton.onclick = () => {
   messageBox.classList.add("hidden");
-  resetStage();
+  startGame();
 };
