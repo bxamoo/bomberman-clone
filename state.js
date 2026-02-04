@@ -3,9 +3,18 @@ let gamePaused = true;
 let gameOver = false;
 
 let map, player, enemy, bombs, explosions, enemyCooldown;
-let items = [];      // アイテム一覧
-let firePower = 2;   // 爆風の長さ
-let maxBombs = 1;    // 同時に置ける爆弾数
+let items = [];      
+
+/* プレイヤーと敵のステータスを完全に分離 */
+let playerStats = {
+  firePower: 2,
+  maxBombs: 1
+};
+
+let enemyStats = {
+  firePower: 2,
+  maxBombs: 1
+};
 
 /* ===== ステージ生成 ===== */
 function generateStage() {
@@ -59,8 +68,8 @@ function resetStage() {
   explosions = [];
   enemyCooldown = 0;
 
-  firePower = 2;
-  maxBombs = 1;
+  playerStats = { firePower: 2, maxBombs: 1 };
+  enemyStats = { firePower: 2, maxBombs: 1 };
 
   gameOver = false;
   gamePaused = false;
