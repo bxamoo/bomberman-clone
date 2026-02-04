@@ -51,22 +51,12 @@ function explosionTiles(b) {
   return tiles;
 }
 
-/* ===== 危険タイル（爆弾＋爆風＋爆弾の隣） ===== */
+/* ===== 危険タイル ===== */
 function dangerTiles() {
   const set = new Set();
-
-  bombs.forEach(b => {
-    // 爆風
-    explosionTiles(b).forEach(t => set.add(`${t.x},${t.y}`));
-
-    // 爆弾の隣も危険
-    DIRS.forEach(([dx, dy]) => {
-      const x = b.x + dx;
-      const y = b.y + dy;
-      set.add(`${x},${y}`);
-    });
-  });
-
+  bombs.forEach(b =>
+    explosionTiles(b).forEach(t => set.add(`${t.x},${t.y}`))
+  );
   return set;
 }
 
@@ -134,19 +124,20 @@ function findPath(start, goal) {
   return null;
 }
 
-/* ===== 爆弾を置いても逃げられるか判定 ===== */
-function canEscapeAfterBomb(x, y) {
-  const danger = dangerTiles();
-  danger.add(`${x},${y}`);
+/* ===== 壊せる壁を探す ===== */
+function findBreakableWallTowardsPlayer() {
+  const dx = Math.sign(player.x - enemy.x);
+  const dy = Math.sign(player.y - enemy.y);
 
-  for (const [dx, dy] of DIRS) {
-    const nx = x + dx;
-    const ny = y + dy;
-    if (canMove(nx, ny) && !danger.has(`${nx},${ny}`)) {
-      return true;
-    }
+  // プレイヤー方向にある壊せる壁を探す
+  const tx = enemy.x + dx;
+  const ty = enemy.y + dy;
+
+  if (map[ty] && map[ty][tx] === 2) {
+    return { x: tx, y: ty };
   }
-  return false;
+
+  return null;
 }
 
 /* ===== 敵AI ===== */
@@ -180,32 +171,46 @@ function enemyAI() {
 
   if (path && path.length > 0) {
     const next = path[0];
-
-    // 壁が邪魔なら爆弾で壊す（逃げ道があるときだけ）
-    const dx = next.x - enemy.x;
-    const dy = next.y - enemy.y;
-    const tx = enemy.x + dx;
-    const ty = enemy.y + dy;
-
-    if (map[ty] && map[ty][tx] === 2) {
-      if (!bombs.some(b => b.owner === "enemy") && canEscapeAfterBomb(enemy.x, enemy.y)) {
-        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
-      }
-      return;
-    }
-
-    // 3. プレイヤーに近づく
     enemy.x = next.x;
     enemy.y = next.y;
+    return;
+  }
 
-    // 4. プレイヤーが近いなら爆弾設置（逃げ道があるときだけ）
-    if (
-      Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y) <= 1 &&
-      !bombs.some(b => b.owner === "enemy") &&
-      canEscapeAfterBomb(enemy.x, enemy.y)
-    ) {
-      bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+  // 3. A* で道が見つからない → 壁破壊モード
+  const wall = findBreakableWallTowardsPlayer();
+
+  if (wall) {
+    // 壁の隣に移動
+    const dx = Math.sign(wall.x - enemy.x);
+    const dy = Math.sign(wall.y - enemy.y);
+
+    const nx = enemy.x + dx;
+    const ny = enemy.y + dy;
+
+    if (canMove(nx, ny)) {
+      enemy.x = nx;
+      enemy.y = ny;
     }
+
+    // 壁の隣に来たら爆弾設置
+    if (Math.abs(enemy.x - wall.x) + Math.abs(enemy.y - wall.y) === 1) {
+      if (!bombs.some(b => b.owner === "enemy")) {
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+      }
+    }
+
+    return;
+  }
+
+  // 4. 何もできないときはランダム移動
+  const moves = DIRS
+    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy }))
+    .filter(p => canMove(p.x, p.y));
+
+  if (moves.length) {
+    const m = moves[Math.floor(Math.random() * moves.length)];
+    enemy.x = m.x;
+    enemy.y = m.y;
   }
 }
 
