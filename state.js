@@ -15,14 +15,13 @@ function generateStage() {
         x === 0 || x === COLS - 1 ||
         (y % 2 === 0 && x % 2 === 0)
       ) {
-        stage[y][x] = 1; // 固定壁
+        stage[y][x] = 1;
       } else {
-        stage[y][x] = Math.random() < 0.35 ? 2 : 0; // 壊せる壁 or 空白
+        stage[y][x] = Math.random() < 0.35 ? 2 : 0;
       }
     }
   }
 
-  // プレイヤーと敵の初期位置周りは空白にする
   stage[1][1] = stage[1][2] = stage[2][1] = 0;
   stage[13][13] = stage[13][12] = stage[12][13] = 0;
 
@@ -44,7 +43,7 @@ function resetStage() {
 
 /* ===== ゲーム開始処理 ===== */
 function startGame() {
-  if (gameStarted) return; // 二重起動防止
+  if (gameStarted) return;
 
   gameStarted = true;
   gamePaused = false;
@@ -52,10 +51,7 @@ function startGame() {
 
   resetStage();
 
-  // スタート画面を消す
-  const uiLayer = document.getElementById("uiLayer");
-  uiLayer.classList.add("hidden");
+  document.getElementById("uiLayer").classList.add("hidden");
 
-  // ゲームループ開始（logic.js 側で gameLoop が定義されている想定）
   requestAnimationFrame(gameLoop);
 }
