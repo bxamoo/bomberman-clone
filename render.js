@@ -20,16 +20,35 @@ function drawBreakableWall(x, y) {
   const px = x * TILE;
   const py = y * TILE;
 
+  // ベースのレンガ色
   const g = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
-  g.addColorStop(0, "#b7410e");
+  g.addColorStop(0, "#c05a2f");
   g.addColorStop(1, "#8b3e2f");
 
   ctx.fillStyle = g;
   ctx.fillRect(px, py, TILE, TILE);
 
+  // レンガの溝（横線）
   ctx.strokeStyle = "#5c2c1d";
   ctx.lineWidth = 2;
-  ctx.strokeRect(px, py, TILE, TILE);
+  ctx.beginPath();
+  ctx.moveTo(px, py + TILE * 0.33);
+  ctx.lineTo(px + TILE, py + TILE * 0.33);
+  ctx.moveTo(px, py + TILE * 0.66);
+  ctx.lineTo(px + TILE, py + TILE * 0.66);
+  ctx.stroke();
+
+  // レンガの溝（縦線）
+  ctx.beginPath();
+  ctx.moveTo(px + TILE * 0.5, py);
+  ctx.lineTo(px + TILE * 0.5, py + TILE * 0.33);
+
+  ctx.moveTo(px + TILE * 0.25, py + TILE * 0.33);
+  ctx.lineTo(px + TILE * 0.25, py + TILE * 0.66);
+
+  ctx.moveTo(px + TILE * 0.75, py + TILE * 0.66);
+  ctx.lineTo(px + TILE * 0.75, py + TILE);
+  ctx.stroke();
 }
 
 /* ===== キャラ描画（chibi ボンバーマン風） ===== */
@@ -67,10 +86,20 @@ function drawBomb(b) {
   const cx = b.x * TILE + TILE / 2;
   const cy = b.y * TILE + TILE / 2;
 
-  // 本体
-  ctx.fillStyle = "black";
+  // 本体の光沢グラデーション
+  const g = ctx.createRadialGradient(cx - 5, cy - 5, 2, cx, cy, 14);
+  g.addColorStop(0, "#444");
+  g.addColorStop(1, "#000");
+
+  ctx.fillStyle = g;
   ctx.beginPath();
   ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ハイライト
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath();
+  ctx.ellipse(cx - 4, cy - 6, 4, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // 導火線
@@ -81,7 +110,7 @@ function drawBomb(b) {
   ctx.lineTo(cx + 14, cy - 14);
   ctx.stroke();
 
-  // 火花（点滅）
+  // 火花
   ctx.fillStyle = Math.random() < 0.5 ? "yellow" : "orange";
   ctx.beginPath();
   ctx.arc(cx + 14, cy - 14, 4, 0, Math.PI * 2);
@@ -93,14 +122,15 @@ function drawExplosionTile(x, y) {
   const cx = x * TILE + TILE / 2;
   const cy = y * TILE + TILE / 2;
 
-  const g = ctx.createRadialGradient(cx, cy, 5, cx, cy, 20);
-  g.addColorStop(0, "#ffec70");
-  g.addColorStop(0.6, "#ff9900");
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+  g.addColorStop(0, "#fff6a0");
+  g.addColorStop(0.3, "#ffd000");
+  g.addColorStop(0.7, "#ff7b00");
   g.addColorStop(1, "transparent");
 
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
   ctx.fill();
 }
 
