@@ -84,51 +84,51 @@ function drawChar(px, py, color, outline) {
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
-  // 体（小さめ）
+  // 体（かなり小さめ）
   ctx.fillStyle = color;
   ctx.strokeStyle = outline;
   ctx.lineWidth = 3;
 
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 6, 8, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + 6, 6, 4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // 顔（少し小さめ）
   ctx.beginPath();
-  ctx.arc(cx, cy - 2, 10, 0, Math.PI * 2);
+  ctx.arc(cx, cy - 1, 9, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 目（縦長で大きめ）
+  // 目（縦長・位置低め・黒目大きめ）
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.ellipse(cx - 4, cy - 4, 2.5, 4.5, 0, 0, Math.PI * 2);
-  ctx.ellipse(cx + 4, cy - 4, 2.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx - 3.5, cy - 3, 2.2, 4.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 3.5, cy - 3, 2.2, 4.2, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "black";
   ctx.beginPath();
-  ctx.ellipse(cx - 4, cy - 4, 1.2, 2.2, 0, 0, Math.PI * 2);
-  ctx.ellipse(cx + 4, cy - 4, 1.2, 2.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx - 3.5, cy - 3, 1.6, 3.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 3.5, cy - 3, 1.6, 3.2, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 手
+  // 手（小さめ）
   ctx.strokeStyle = outline;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(cx - 8, cy + 2);
-  ctx.lineTo(cx - 12, cy + 2);
-  ctx.moveTo(cx + 8, cy + 2);
-  ctx.lineTo(cx + 12, cy + 2);
+  ctx.moveTo(cx - 7, cy + 1);
+  ctx.lineTo(cx - 11, cy + 1);
+  ctx.moveTo(cx + 7, cy + 1);
+  ctx.lineTo(cx + 11, cy + 1);
   ctx.stroke();
 
-  // 足
+  // 足（短め）
   ctx.beginPath();
-  ctx.moveTo(cx - 4, cy + 10);
-  ctx.lineTo(cx - 4, cy + 14);
-  ctx.moveTo(cx + 4, cy + 10);
-  ctx.lineTo(cx + 4, cy + 14);
+  ctx.moveTo(cx - 3, cy + 9);
+  ctx.lineTo(cx - 3, cy + 13);
+  ctx.moveTo(cx + 3, cy + 9);
+  ctx.lineTo(cx + 3, cy + 13);
   ctx.stroke();
 }
 
@@ -208,7 +208,7 @@ function drawItemFire(x, y) {
   ctx.lineWidth = 2;
   ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8);
 
-  // 炎（ギザギザ）
+  // 炎（ギザギザ・チューリップ型）
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
@@ -220,14 +220,20 @@ function drawItemFire(x, y) {
 
   ctx.fillStyle = g;
   ctx.beginPath();
+
+  // 上のギザギザ（3つの炎の先）
   ctx.moveTo(cx, cy - 12);
-  ctx.lineTo(cx + 6, cy - 6);
-  ctx.lineTo(cx + 10, cy);
-  ctx.lineTo(cx + 6, cy + 8);
+  ctx.lineTo(cx + 5, cy - 6);
+  ctx.lineTo(cx + 10, cy - 10);
+  ctx.lineTo(cx + 6, cy - 2);
+  ctx.lineTo(cx + 10, cy + 4);
+  ctx.lineTo(cx + 4, cy + 10);
   ctx.lineTo(cx, cy + 12);
-  ctx.lineTo(cx - 6, cy + 8);
-  ctx.lineTo(cx - 10, cy);
-  ctx.lineTo(cx - 6, cy - 6);
+  ctx.lineTo(cx - 4, cy + 10);
+  ctx.lineTo(cx - 10, cy + 4);
+  ctx.lineTo(cx - 6, cy - 2);
+  ctx.lineTo(cx - 10, cy - 10);
+  ctx.lineTo(cx - 5, cy - 6);
   ctx.closePath();
   ctx.fill();
 }
