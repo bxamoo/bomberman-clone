@@ -200,7 +200,7 @@ function enemyAI() {
 const distToPlayer =
   Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
 
-if (distToPlayer <= 4 && Math.random() < 0.3) {
+if (distToPlayer <= 4 && Math.random() < 0.6) {
   enemyState = "huntPlayer";
   return;
 }
@@ -277,15 +277,16 @@ if (distToPlayer <= 4 && Math.random() < 0.3) {
         enemy.y = next.y;
       }
 
-      // 近づいたら爆弾を置く
-      const dist =
-        Math.abs(enemy.x - player.x) +
-        Math.abs(enemy.y - player.y);
+// 近づいたら爆弾を置く（距離2以内に緩和）
+const dist =
+  Math.abs(enemy.x - player.x) +
+  Math.abs(enemy.y - player.y);
 
-      if (dist === 1 && !bombs.some(b => b.owner === "enemy")) {
-        bombs.push({ x: enemy.x, y: enemy.y, timer: 80, owner: "enemy" });
-        enemyState = "escape";
-      }
+if (dist <= 2 && !bombs.some(b => b.owner === "enemy")) {
+  bombs.push({ x: enemy.x, y: enemy.y, timer: 80, owner: "enemy" });
+  enemyState = "escape";
+}
+
       return;
     }
 
