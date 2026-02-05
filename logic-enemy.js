@@ -1,5 +1,3 @@
-let enemyCooldown = 0;
-
 /* ===== 前回の移動方向 ===== */
 let lastMove = null;
 
