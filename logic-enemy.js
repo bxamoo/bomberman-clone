@@ -247,7 +247,7 @@ function enemyAI() {
 
       if (!dangerNow.has(`${enemy.x},${enemy.y}`)) {
         enemyState = "wait";
-        enemyWaitTimer = 40;
+        enemyWaitTimer = 20;
         return;
       }
 
