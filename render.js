@@ -170,8 +170,23 @@ function drawExplosionTile(x, y) {
    アイテム（fire / speed / bomb）
 ========================================================= */
 function drawItemFire(x, y) {
-  const cx = x * TILE + 16;
-  const cy = y * TILE + 16;
+  const px = x * TILE;
+  const py = y * TILE;
+
+  // 背景（水色の四角）
+  const bg = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
+  bg.addColorStop(0, "#4fc3f7");
+  bg.addColorStop(1, "#0288d1");
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+  ctx.strokeStyle = "#01579b";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8);
+
+  // 火の玉アイコン
+  const cx = px + TILE / 2;
+  const cy = py + TILE / 2;
 
   const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 12);
   g.addColorStop(0, "#fff6a0");
@@ -186,33 +201,38 @@ function drawItemFire(x, y) {
   ctx.fill();
 }
 
-function drawItemSpeed(x, y) {
-  const cx = x * TILE + 16;
-  const cy = y * TILE + 16;
-
-  ctx.fillStyle = "#7ed6ff";
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 12, 6, Math.PI / 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#cfffff";
-  ctx.beginPath();
-  ctx.ellipse(cx - 4, cy - 2, 6, 3, Math.PI / 6, 0, Math.PI * 2);
-  ctx.fill();
-}
-
 function drawItemBomb(x, y) {
-  const cx = x * TILE + 16;
-  const cy = y * TILE + 16;
+  const px = x * TILE;
+  const py = y * TILE;
 
-  ctx.fillStyle = "#333";
+  // 背景（緑の四角）
+  const bg = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
+  bg.addColorStop(0, "#4caf50");
+  bg.addColorStop(1, "#2e7d32");
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+  ctx.strokeStyle = "#1b5e20";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8);
+
+  // 爆弾アイコン（小さめ）
+  const cx = px + TILE / 2;
+  const cy = py + TILE / 2;
+
+  const g = ctx.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, 10);
+  g.addColorStop(0, "#555");
+  g.addColorStop(1, "#000");
+
+  ctx.fillStyle = g;
   ctx.beginPath();
   ctx.arc(cx, cy, 10, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#fff";
+  // ハイライト
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
   ctx.beginPath();
-  ctx.arc(cx - 3, cy - 3, 3, 0, Math.PI * 2);
+  ctx.ellipse(cx - 3, cy - 4, 3, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -235,7 +255,6 @@ function draw() {
     if (!item.visible) return;
 
     if (item.type === "fire") drawItemFire(item.x, item.y);
-    if (item.type === "speed") drawItemSpeed(item.x, item.y);
     if (item.type === "bomb") drawItemBomb(item.x, item.y);
   });
 
