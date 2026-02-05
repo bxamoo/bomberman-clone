@@ -10,10 +10,6 @@ let currentItem = null;
 let enemyState = "idle";   // idle, collectItem, moveToWall, placeBomb, escape, huntPlayer, wait
 let enemyWaitTimer = 0;
 
-/* ===== 移動クールダウン ===== */
-// ※ ここは二重定義しないように注意（既にどこかで宣言されている場合は削除）
-let enemyCooldown = 0;
-
 /* ===== 壊せる壁を探す ===== */
 function findAnyBreakableWall() {
   let best = null;
