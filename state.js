@@ -77,19 +77,21 @@ function resetStage() {
 
 /* ===== ゲーム開始 ===== */
 function startGame() {
+
+  resetStage();  // ← 先にプレイヤーと敵を作る！
+
+  // ぬるっと移動用の描画座標を初期化
+  player.renderX = player.x * TILE;
+  player.renderY = player.y * TILE;
+
+  enemy.renderX = enemy.x * TILE;
+  enemy.renderY = enemy.y * TILE;
+
   gameStarted = true;
   gamePaused = false;
   gameOver = false;
-
-  resetStage();
 
   document.getElementById("uiLayer").classList.add("hidden");
 
   requestAnimationFrame(gameLoop);
 }
-
-player.renderX = player.x * TILE;
-player.renderY = player.y * TILE;
-
-enemy.renderX = enemy.x * TILE;
-enemy.renderY = enemy.y * TILE;
