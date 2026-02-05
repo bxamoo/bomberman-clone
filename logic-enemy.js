@@ -9,9 +9,6 @@ let currentTarget = null;
 let enemyState = "idle";   // idle, moveToWall, placeBomb, escape, wait
 let enemyWaitTimer = 0;
 
-/* ===== 移動クールダウン ===== */
-let enemyCooldown = 0;     // ← これが高速移動防止の鍵
-
 /* ===== 壊せる壁を自力で探す ===== */
 function findAnyBreakableWall() {
   let best = null;
