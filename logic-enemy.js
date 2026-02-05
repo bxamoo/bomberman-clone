@@ -255,7 +255,7 @@ function enemyAI() {
     ------------------------- */
     case "placeBomb":
       if (!bombs.some(b => b.owner === "enemy")) {
-        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 80, owner: "enemy" });
       }
       enemyState = "escape";
       return;
@@ -283,7 +283,7 @@ function enemyAI() {
         Math.abs(enemy.y - player.y);
 
       if (dist === 1 && !bombs.some(b => b.owner === "enemy")) {
-        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 80, owner: "enemy" });
         enemyState = "escape";
       }
       return;
@@ -297,7 +297,7 @@ function enemyAI() {
 
       if (!dangerNow.has(`${enemy.x},${enemy.y}`)) {
         enemyState = "wait";
-        enemyWaitTimer = 20;
+        enemyWaitTimer = 15;
         return;
       }
 
