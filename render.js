@@ -1,4 +1,26 @@
-/* ===== 壁（メタル風） ===== */
+/* =========================================================
+   初期化：描画用座標（ぬるっと移動用）
+========================================================= */
+player.renderX = player.x * TILE;
+player.renderY = player.y * TILE;
+
+enemy.renderX = enemy.x * TILE;
+enemy.renderY = enemy.y * TILE;
+
+/* =========================================================
+   ぬるっと移動（補間）
+========================================================= */
+function smoothMove(entity) {
+  const targetX = entity.x * TILE;
+  const targetY = entity.y * TILE;
+
+  entity.renderX += (targetX - entity.renderX) * 0.25;
+  entity.renderY += (targetY - entity.renderY) * 0.25;
+}
+
+/* =========================================================
+   壁（メタル風）
+========================================================= */
 function drawSolidWall(x, y) {
   const px = x * TILE;
   const py = y * TILE;
@@ -15,12 +37,14 @@ function drawSolidWall(x, y) {
   ctx.strokeRect(px, py, TILE, TILE);
 }
 
-/* ===== 壊せる壁（レンガ風） ===== */
+/* =========================================================
+   壊せる壁（レンガ模様）
+========================================================= */
 function drawBreakableWall(x, y) {
   const px = x * TILE;
   const py = y * TILE;
 
-  // ベースのレンガ色
+  // ベース色
   const g = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
   g.addColorStop(0, "#c05a2f");
   g.addColorStop(1, "#8b3e2f");
@@ -28,7 +52,7 @@ function drawBreakableWall(x, y) {
   ctx.fillStyle = g;
   ctx.fillRect(px, py, TILE, TILE);
 
-  // レンガの溝（横線）
+  // 横線（レンガ段）
   ctx.strokeStyle = "#5c2c1d";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -38,7 +62,7 @@ function drawBreakableWall(x, y) {
   ctx.lineTo(px + TILE, py + TILE * 0.66);
   ctx.stroke();
 
-  // レンガの溝（縦線）
+  // 縦線（レンガ区切り）
   ctx.beginPath();
   ctx.moveTo(px + TILE * 0.5, py);
   ctx.lineTo(px + TILE * 0.5, py + TILE * 0.33);
@@ -51,11 +75,14 @@ function drawBreakableWall(x, y) {
   ctx.stroke();
 }
 
-/* ===== キャラ描画（chibi ボンバーマン風） ===== */
+/* =========================================================
+   キャラ（chibi ボンバーマン風）
+========================================================= */
 function drawChar(px, py, color, outline) {
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
+  // 体
   ctx.fillStyle = color;
   ctx.strokeStyle = outline;
   ctx.lineWidth = 3;
@@ -80,12 +107,14 @@ function drawChar(px, py, color, outline) {
   ctx.fill();
 }
 
-/* ===== 導火線つき爆弾 ===== */
+/* =========================================================
+   爆弾（光沢つき）
+========================================================= */
 function drawBomb(b) {
   const cx = b.x * TILE + TILE / 2;
   const cy = b.y * TILE + TILE / 2;
 
-  // 本体の光沢グラデーション
+  // 光沢グラデーション
   const g = ctx.createRadialGradient(cx - 5, cy - 5, 2, cx, cy, 14);
   g.addColorStop(0, "#444");
   g.addColorStop(1, "#000");
@@ -116,7 +145,9 @@ function drawBomb(b) {
   ctx.fill();
 }
 
-/* ===== 爆風（十字型の炎） ===== */
+/* =========================================================
+   爆風（本家風・中心が強く光る）
+========================================================= */
 function drawExplosionTile(x, y) {
   const cx = x * TILE + TILE / 2;
   const cy = y * TILE + TILE / 2;
@@ -133,28 +164,77 @@ function drawExplosionTile(x, y) {
   ctx.fill();
 }
 
-/* ===== 描画メイン ===== */
+/* =========================================================
+   アイテム（fire / speed / bomb）
+========================================================= */
+function drawItemFire(x, y) {
+  const cx = x * TILE + 16;
+  const cy = y * TILE + 16;
+
+  const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 12);
+  g.addColorStop(0, "#fff6a0");
+  g.addColorStop(0.4, "#ffb300");
+  g.addColorStop(1, "#ff5e00");
+
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 10);
+  ctx.quadraticCurveTo(cx + 10, cy - 5, cx, cy + 10);
+  ctx.quadraticCurveTo(cx - 10, cy - 5, cx, cy - 10);
+  ctx.fill();
+}
+
+function drawItemSpeed(x, y) {
+  const cx = x * TILE + 16;
+  const cy = y * TILE + 16;
+
+  ctx.fillStyle = "#7ed6ff";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 12, 6, Math.PI / 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#cfffff";
+  ctx.beginPath();
+  ctx.ellipse(cx - 4, cy - 2, 6, 3, Math.PI / 6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawItemBomb(x, y) {
+  const cx = x * TILE + 16;
+  const cy = y * TILE + 16;
+
+  ctx.fillStyle = "#333";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(cx - 3, cy - 3, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* =========================================================
+   描画メイン
+========================================================= */
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // マップ
+  // 壁
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      if (map[y][x] === 1) drawSolidWall(x, y);      // 固定壁
-      else if (map[y][x] === 2) drawBreakableWall(x, y); // 壊せる壁
+      if (map[y][x] === 1) drawSolidWall(x, y);
+      else if (map[y][x] === 2) drawBreakableWall(x, y);
     }
   }
 
   // アイテム
   items.forEach(item => {
     if (!item.visible) return;
-    const cx = item.x * TILE + 16;
-    const cy = item.y * TILE + 16;
 
-    ctx.fillStyle = item.type === "fire" ? "yellow" : "blue";
-    ctx.beginPath();
-    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-    ctx.fill();
+    if (item.type === "fire") drawItemFire(item.x, item.y);
+    if (item.type === "speed") drawItemSpeed(item.x, item.y);
+    if (item.type === "bomb") drawItemBomb(item.x, item.y);
   });
 
   // 爆弾
@@ -165,12 +245,14 @@ function draw() {
     e.tiles.forEach(t => drawExplosionTile(t.x, t.y))
   );
 
-  // キャラ
-drawChar(player.renderX, player.renderY, "#3498db", "#1f4e78");
-if (enemy.alive) drawChar(enemy.renderX, enemy.renderY, "#e74c3c", "#922b21");
+  // キャラ（ぬるっと移動）
+  drawChar(player.renderX, player.renderY, "#3498db", "#1f4e78");
+  if (enemy.alive) drawChar(enemy.renderX, enemy.renderY, "#e74c3c", "#922b21");
 }
 
-/* ===== ゲーム終了 ===== */
+/* =========================================================
+   ゲーム終了
+========================================================= */
 function endGame(text) {
   gameOver = true;
   gamePaused = true;
@@ -178,15 +260,20 @@ function endGame(text) {
   messageBox.classList.remove("hidden");
 }
 
-/* ===== ゲームループ ===== */
+/* =========================================================
+   ゲームループ
+========================================================= */
 function gameLoop() {
   if (!gameStarted || gamePaused || gameOver) return;
 
   updateBombs();
   updateItems();
+  enemyAI();
+
+  // ぬるっと移動
   smoothMove(player);
   smoothMove(enemy);
-  enemyAI();
+
   draw();
 
   if (!enemy.alive && !gameOver) endGame("You Win!");
@@ -194,16 +281,9 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-function smoothMove(entity) {
-  const targetX = entity.x * TILE;
-  const targetY = entity.y * TILE;
-
-  // 0.25 は補間率（小さいほどゆっくり）
-  entity.renderX += (targetX - entity.renderX) * 0.25;
-  entity.renderY += (targetY - entity.renderY) * 0.25;
-}
-
-/* ===== UI ===== */
+/* =========================================================
+   UI
+========================================================= */
 startButton.onclick = () => {
   messageBox.classList.add("hidden");
   startGame();
