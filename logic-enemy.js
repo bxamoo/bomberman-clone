@@ -6,7 +6,7 @@ let currentWall = null;
 let currentTarget = null;
 
 /* ===== 行動フェーズ管理 ===== */
-let enemyState = "idle";   // idle, moveToWall, placeBomb, escape, wait
+let enemyState = "idle";   // idle, moveToWall, placeBomb, escape, huntPlayer, wait
 let enemyWaitTimer = 0;
 
 /* ===== 壊せる壁を自力で探す ===== */
@@ -169,7 +169,7 @@ function enemyAI() {
     enemyCooldown--;
     return;
   }
-  enemyCooldown = 8; // ← ここで速度調整（数字を大きくするとゆっくりになる）
+  enemyCooldown = 8;
 
   /* ===== 待機フェーズ ===== */
   if (enemyState === "wait") {
@@ -184,16 +184,28 @@ function enemyAI() {
   const danger = dangerTiles();
   if (danger.has(`${enemy.x},${enemy.y}`)) {
     enemyState = "escape";
-
     if (escapeFromDanger(danger)) return;
-
     return;
   }
 
   /* ===== 危険がないときの行動 ===== */
   switch (enemyState) {
 
-    case "idle":
+    /* -------------------------
+       ① idle：優先順位で行動決定
+    ------------------------- */
+    case "idle": {
+
+      // ★ プレイヤーが近いなら追う（距離6以内）
+      const distToPlayer =
+        Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+
+      if (distToPlayer <= 6) {
+        enemyState = "huntPlayer";
+        return;
+      }
+
+      // 壁を壊す
       currentWall = findAnyBreakableWall();
       if (!currentWall) {
         randomMove();
@@ -209,7 +221,11 @@ function enemyAI() {
 
       enemyState = "moveToWall";
       return;
+    }
 
+    /* -------------------------
+       ② 壁の隣へ移動
+    ------------------------- */
     case "moveToWall": {
       const path = findPath(enemy, currentTarget);
 
@@ -234,14 +250,48 @@ function enemyAI() {
       return;
     }
 
+    /* -------------------------
+       ③ 爆弾を置く
+    ------------------------- */
     case "placeBomb":
       if (!bombs.some(b => b.owner === "enemy")) {
         bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
       }
-
       enemyState = "escape";
       return;
 
+    /* -------------------------
+       ④ プレイヤーを追う
+    ------------------------- */
+    case "huntPlayer": {
+      const path = findPath(enemy, { x: player.x, y: player.y });
+
+      if (!path || path.length < 2) {
+        enemyState = "idle";
+        return;
+      }
+
+      const next = path[1];
+      if (canMove(next.x, next.y)) {
+        enemy.x = next.x;
+        enemy.y = next.y;
+      }
+
+      // 近づいたら爆弾を置く
+      const dist =
+        Math.abs(enemy.x - player.x) +
+        Math.abs(enemy.y - player.y);
+
+      if (dist === 1 && !bombs.some(b => b.owner === "enemy")) {
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+        enemyState = "escape";
+      }
+      return;
+    }
+
+    /* -------------------------
+       ⑤ 爆風から逃げる
+    ------------------------- */
     case "escape": {
       const dangerNow = dangerTiles();
 
