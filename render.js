@@ -52,11 +52,10 @@ function drawBreakableWall(x, y) {
 }
 
 /* ===== キャラ描画（chibi ボンバーマン風） ===== */
-function drawChar(x, y, color, outline) {
-  const cx = x * TILE + TILE / 2;
-  const cy = y * TILE + TILE / 2;
+function drawChar(px, py, color, outline) {
+  const cx = px + TILE / 2;
+  const cy = py + TILE / 2;
 
-  // 体
   ctx.fillStyle = color;
   ctx.strokeStyle = outline;
   ctx.lineWidth = 3;
@@ -167,8 +166,8 @@ function draw() {
   );
 
   // キャラ
-  drawChar(player.x, player.y, "#3498db", "#1f4e78"); // 青プレイヤー
-  if (enemy.alive) drawChar(enemy.x, enemy.y, "#e74c3c", "#922b21"); // 赤敵
+drawChar(player.renderX, player.renderY, "#3498db", "#1f4e78");
+if (enemy.alive) drawChar(enemy.renderX, enemy.renderY, "#e74c3c", "#922b21");
 }
 
 /* ===== ゲーム終了 ===== */
@@ -185,12 +184,23 @@ function gameLoop() {
 
   updateBombs();
   updateItems();
+  smoothMove(player);
+  smoothMove(enemy);
   enemyAI();
   draw();
 
   if (!enemy.alive && !gameOver) endGame("You Win!");
 
   requestAnimationFrame(gameLoop);
+}
+
+function smoothMove(entity) {
+  const targetX = entity.x * TILE;
+  const targetY = entity.y * TILE;
+
+  // 0.25 は補間率（小さいほどゆっくり）
+  entity.renderX += (targetX - entity.renderX) * 0.25;
+  entity.renderY += (targetY - entity.renderY) * 0.25;
 }
 
 /* ===== UI ===== */
