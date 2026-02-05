@@ -38,10 +38,12 @@ function findAnyBreakableWall() {
 
 /* ===== アイテムを探す ===== */
 function findNearestItem() {
+  if (!Array.isArray(items) || items.length === 0) return null;
+
   let best = null;
   let bestDist = Infinity;
 
-  for (const item of items) { // ← items[] はフィールド上のアイテム配列を想定
+  for (const item of items) {
     const d = Math.abs(enemy.x - item.x) + Math.abs(enemy.y - item.y);
     if (d < bestDist) {
       bestDist = d;
@@ -50,6 +52,7 @@ function findNearestItem() {
   }
   return best;
 }
+
 
 /* ===== 壁の隣の空きマスを探す ===== */
 function findAdjacentTarget(wall) {
@@ -256,7 +259,7 @@ function enemyAI() {
         return;
       }
 
-      const path = findPath(enemy, currentItem);
+      const path = findPath(enemy, { x: currentItem.x, y: currentItem.y });
       if (!path || path.length < 2) {
         enemyState = "idle";
         return;
@@ -318,7 +321,7 @@ function enemyAI() {
        ⑤ プレイヤーを追う
     ------------------------- */
     case "huntPlayer": {
-      const path = findPath(enemy, player);
+      const path = findPath(enemy, { x: player.x, y: player.y });
 
       if (!path || path.length < 2) {
         enemyState = "idle";
