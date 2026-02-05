@@ -87,3 +87,9 @@ function startGame() {
 
   requestAnimationFrame(gameLoop);
 }
+
+player.renderX = player.x * TILE;
+player.renderY = player.y * TILE;
+
+enemy.renderX = enemy.x * TILE;
+enemy.renderY = enemy.y * TILE;
