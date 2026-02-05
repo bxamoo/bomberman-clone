@@ -9,6 +9,9 @@ let currentTarget = null;
 let enemyState = "idle";   // idle, moveToWall, placeBomb, escape, wait
 let enemyWaitTimer = 0;
 
+/* ===== 移動クールダウン ===== */
+let enemyCooldown = 0;     // ← これが高速移動防止の鍵
+
 /* ===== 壊せる壁を自力で探す ===== */
 function findAnyBreakableWall() {
   let best = null;
@@ -164,6 +167,13 @@ function randomMove() {
 function enemyAI() {
   if (!enemy || !enemy.alive) return;
 
+  /* ===== 移動クールダウン ===== */
+  if (enemyCooldown > 0) {
+    enemyCooldown--;
+    return;
+  }
+  enemyCooldown = 8; // ← ここで速度調整（数字を大きくするとゆっくりになる）
+
   /* ===== 待機フェーズ ===== */
   if (enemyState === "wait") {
     if (enemyWaitTimer > 0) {
@@ -186,9 +196,6 @@ function enemyAI() {
   /* ===== 危険がないときの行動 ===== */
   switch (enemyState) {
 
-    /* -------------------------
-       ① idle：壁を探す
-    ------------------------- */
     case "idle":
       currentWall = findAnyBreakableWall();
       if (!currentWall) {
@@ -206,9 +213,6 @@ function enemyAI() {
       enemyState = "moveToWall";
       return;
 
-    /* -------------------------
-       ② 壁の隣へ移動
-    ------------------------- */
     case "moveToWall": {
       const path = findPath(enemy, currentTarget);
 
@@ -233,9 +237,6 @@ function enemyAI() {
       return;
     }
 
-    /* -------------------------
-       ③ 爆弾を置く
-    ------------------------- */
     case "placeBomb":
       if (!bombs.some(b => b.owner === "enemy")) {
         bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
@@ -244,15 +245,12 @@ function enemyAI() {
       enemyState = "escape";
       return;
 
-    /* -------------------------
-       ④ 爆風から逃げる
-    ------------------------- */
     case "escape": {
       const dangerNow = dangerTiles();
 
       if (!dangerNow.has(`${enemy.x},${enemy.y}`)) {
         enemyState = "wait";
-        enemyWaitTimer = 40; // ← 落ち着いて立ち止まる
+        enemyWaitTimer = 40;
         return;
       }
 
