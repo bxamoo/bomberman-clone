@@ -1,13 +1,51 @@
-/* ===== キャラ描画（目つき） ===== */
-function drawChar(x, y, color) {
+/* ===== 壁（メタル風） ===== */
+function drawSolidWall(x, y) {
+  const px = x * TILE;
+  const py = y * TILE;
+
+  const g = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
+  g.addColorStop(0, "#bfbfbf");
+  g.addColorStop(1, "#6b6b6b");
+
+  ctx.fillStyle = g;
+  ctx.fillRect(px, py, TILE, TILE);
+
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px, py, TILE, TILE);
+}
+
+/* ===== 壊せる壁（レンガ風） ===== */
+function drawBreakableWall(x, y) {
+  const px = x * TILE;
+  const py = y * TILE;
+
+  const g = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
+  g.addColorStop(0, "#b7410e");
+  g.addColorStop(1, "#8b3e2f");
+
+  ctx.fillStyle = g;
+  ctx.fillRect(px, py, TILE, TILE);
+
+  ctx.strokeStyle = "#5c2c1d";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px, py, TILE, TILE);
+}
+
+/* ===== キャラ描画（chibi ボンバーマン風） ===== */
+function drawChar(x, y, color, outline) {
   const cx = x * TILE + TILE / 2;
   const cy = y * TILE + TILE / 2;
 
   // 体
   ctx.fillStyle = color;
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 3;
+
   ctx.beginPath();
   ctx.arc(cx, cy, 14, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
 
   // 白目
   ctx.fillStyle = "white";
@@ -16,7 +54,7 @@ function drawChar(x, y, color) {
   ctx.arc(cx + 5, cy - 3, 4, 0, Math.PI * 2);
   ctx.fill();
 
-  // 黒目（くりくり）
+  // 黒目
   ctx.fillStyle = "black";
   ctx.beginPath();
   ctx.arc(cx - 5, cy - 3, 2, 0, Math.PI * 2);
@@ -43,10 +81,26 @@ function drawBomb(b) {
   ctx.lineTo(cx + 14, cy - 14);
   ctx.stroke();
 
-  // 火花（点滅アニメーション）
+  // 火花（点滅）
   ctx.fillStyle = Math.random() < 0.5 ? "yellow" : "orange";
   ctx.beginPath();
   ctx.arc(cx + 14, cy - 14, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* ===== 爆風（十字型の炎） ===== */
+function drawExplosionTile(x, y) {
+  const cx = x * TILE + TILE / 2;
+  const cy = y * TILE + TILE / 2;
+
+  const g = ctx.createRadialGradient(cx, cy, 5, cx, cy, 20);
+  g.addColorStop(0, "#ffec70");
+  g.addColorStop(0.6, "#ff9900");
+  g.addColorStop(1, "transparent");
+
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -57,42 +111,34 @@ function draw() {
   // マップ
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
-      if (map[y][x] === 1) ctx.fillStyle = "#666";   // 固定壁
-      if (map[y][x] === 2) ctx.fillStyle = "#a66";   // 壊せる壁
-      if (map[y][x]) ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+      if (map[y][x] === 1) drawSolidWall(x, y);      // 固定壁
+      else if (map[y][x] === 2) drawBreakableWall(x, y); // 壊せる壁
     }
   }
 
   // アイテム
   items.forEach(item => {
     if (!item.visible) return;
+    const cx = item.x * TILE + 16;
+    const cy = item.y * TILE + 16;
+
     ctx.fillStyle = item.type === "fire" ? "yellow" : "blue";
     ctx.beginPath();
-    ctx.arc(item.x * TILE + 16, item.y * TILE + 16, 10, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  // 爆弾（導火線つき）
+  // 爆弾
   bombs.forEach(b => drawBomb(b));
 
   // 爆風
   explosions.forEach(e =>
-    e.tiles.forEach(t => {
-      const cx = t.x * TILE + 16;
-      const cy = t.y * TILE + 16;
-      const g = ctx.createRadialGradient(cx, cy, 5, cx, cy, 20);
-      g.addColorStop(0, "yellow");
-      g.addColorStop(1, "orange");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-      ctx.fill();
-    })
+    e.tiles.forEach(t => drawExplosionTile(t.x, t.y))
   );
 
   // キャラ
-  drawChar(player.x, player.y, "cyan");
-  if (enemy.alive) drawChar(enemy.x, enemy.y, "red");
+  drawChar(player.x, player.y, "#3498db", "#1f4e78"); // 青プレイヤー
+  if (enemy.alive) drawChar(enemy.x, enemy.y, "#e74c3c", "#922b21"); // 赤敵
 }
 
 /* ===== ゲーム終了 ===== */
