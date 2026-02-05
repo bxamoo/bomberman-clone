@@ -196,14 +196,14 @@ function enemyAI() {
     ------------------------- */
     case "idle": {
 
-      // ★ プレイヤーが近いなら追う（距離6以内）
-      const distToPlayer =
-        Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+// ★ プレイヤーが近いなら追う（距離4以内 & 30%の確率）
+const distToPlayer =
+  Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
 
-      if (distToPlayer <= 6) {
-        enemyState = "huntPlayer";
-        return;
-      }
+if (distToPlayer <= 4 && Math.random() < 0.3) {
+  enemyState = "huntPlayer";
+  return;
+}
 
       // 壁を壊す
       currentWall = findAnyBreakableWall();
