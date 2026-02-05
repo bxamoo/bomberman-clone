@@ -5,6 +5,10 @@ let lastMove = null;
 let currentWall = null;
 let currentTarget = null;
 
+/* ===== 行動フェーズ管理 ===== */
+let enemyState = "idle";   // idle, moveToWall, placeBomb, escape, wait
+let enemyWaitTimer = 0;
+
 /* ===== 壊せる壁を自力で探す ===== */
 function findAnyBreakableWall() {
   let best = null;
@@ -64,13 +68,13 @@ function simulateExplosion(x, y, power) {
   return tiles;
 }
 
-/* ===== 安全マスへの最短パス（dangerTiles ベース） ===== */
+/* ===== dangerTiles() を使って安全マスへの最短パスを探す ===== */
 function findSafePath(danger) {
   const visited = Array.from({ length: ROWS }, () =>
     Array(COLS).fill(false)
   );
   const queue = [];
-  const parent = new Map(); // key: "x,y" -> value: "px,py"
+  const parent = new Map();
 
   const startKey = `${enemy.x},${enemy.y}`;
   queue.push({ x: enemy.x, y: enemy.y });
@@ -82,7 +86,6 @@ function findSafePath(danger) {
     const { x, y } = queue.shift();
     const key = `${x},${y}`;
 
-    // 危険でないマスをゴールとする（スタートが安全ならそこがゴール）
     if (!danger.has(key)) {
       goal = { x, y };
       break;
@@ -111,7 +114,6 @@ function findSafePath(danger) {
 
   if (!goal) return null;
 
-  // ゴールからスタートまで逆辿りしてパスを復元
   const path = [];
   let curKey = `${goal.x},${goal.y}`;
   while (curKey !== startKey) {
@@ -126,25 +128,7 @@ function findSafePath(danger) {
   return path;
 }
 
-/* ===== 特定の爆弾から逃げる（敵が置いた爆弾用：1マス版） ===== */
-function escapeFromBomb(bx, by) {
-  const explosion = simulateExplosion(bx, by, enemyStats.firePower);
-
-  const safeMoves = DIRS
-    .map(([dx, dy]) => ({ x: enemy.x + dx, y: enemy.y + dy, dx, dy }))
-    .filter(p => canMove(p.x, p.y) && !explosion.has(`${p.x},${p.y}`));
-
-  if (safeMoves.length > 0) {
-    const m = safeMoves[Math.floor(Math.random() * safeMoves.length)];
-    enemy.x = m.x;
-    enemy.y = m.y;
-    lastMove = { dx: m.dx, dy: m.dy };
-    return true;
-  }
-  return false;
-}
-
-/* ===== dangerTiles() ベースで危険から逃げる（経路探索版） ===== */
+/* ===== dangerTiles() ベースで危険から逃げる ===== */
 function escapeFromDanger(danger) {
   const path = findSafePath(danger);
   if (!path || path.length < 2) return false;
@@ -180,127 +164,100 @@ function randomMove() {
 function enemyAI() {
   if (!enemy || !enemy.alive) return;
 
-  // ===== 開始直後の硬直を防ぐ（gameTime があるときだけ） =====
-  if (typeof gameTime !== "undefined" && gameTime < 30) {
-    enemyCooldown = Math.min(enemyCooldown || 2, 2);
+  /* ===== 待機フェーズ ===== */
+  if (enemyState === "wait") {
+    if (enemyWaitTimer > 0) {
+      enemyWaitTimer--;
+      return;
+    }
+    enemyState = "idle";
   }
 
-  if (enemyCooldown > 0) {
-    enemyCooldown--;
-    return;
-  }
-  enemyCooldown = 10;
-
-  // ===== 危険回避（最優先） =====
+  /* ===== 危険回避（最優先） ===== */
   const danger = dangerTiles();
-
   if (danger.has(`${enemy.x},${enemy.y}`)) {
-    // 1. 自分の爆弾があれば、その爆風シミュレーションでまず1マス逃げる
-    const enemyBomb = bombs.find(b => b.owner === "enemy");
-    if (enemyBomb && escapeFromBomb(enemyBomb.x, enemyBomb.y)) {
-      return;
-    }
-    // 2. それでも危険なら、dangerTiles ベースで安全マスへの経路探索
-    if (escapeFromDanger(danger)) {
-      return;
-    }
-    // どうしても逃げ場が無い場合は諦め…
-  }
+    enemyState = "escape";
 
-  // ===== 危険でないとき：壁を探しに行く =====
+    if (escapeFromDanger(danger)) return;
 
-  // 壁ターゲットの再設定
-  if (
-    !currentWall ||
-    !map[currentWall.y] ||
-    map[currentWall.y][currentWall.x] !== 2
-  ) {
-    currentWall = findAnyBreakableWall();
-
-    // 壁が無い → ランダム移動でうろうろ
-    if (!currentWall) {
-      randomMove();
-      return;
-    }
-
-    currentTarget = findAdjacentTarget(currentWall);
-
-    // 隣接マスが無い → 一旦リセットしてランダム移動
-    if (!currentTarget) {
-      currentWall = null;
-      randomMove();
-      return;
-    }
-  }
-
-  // ===== 壁の隣に来たら爆弾を置く =====
-  const distToWall =
-    Math.abs(enemy.x - currentWall.x) + Math.abs(enemy.y - currentWall.y);
-
-  if (distToWall === 1) {
-    // まだ自分の爆弾が無いときだけ置く
-    if (!bombs.some(b => b.owner === "enemy")) {
-      const bx = enemy.x;
-      const by = enemy.y;
-
-      // ここでは「逃げ場があるかどうか」は事前チェックしない
-      // とにかく置いて、その後のフレームで escapeFromDanger で逃げる
-
-      bombs.push({ x: bx, y: by, timer: 120, owner: "enemy" });
-
-      // 置いた直後に、今の danger を再計算して即退避を試みる
-      const newDanger = dangerTiles();
-      escapeFromDanger(newDanger);
-
-      return;
-    }
-  }
-
-  // ===== A* でターゲット（壁の隣マス）へ移動 =====
-  const path = findPath(enemy, currentTarget);
-
-  if (!path || path.length < 2) {
-    // パスが無い → ランダム移動で停滞回避
-    randomMove();
     return;
   }
 
-  const next = path[1];
-  const dx = next.x - enemy.x;
-  const dy = next.y - enemy.y;
+  /* ===== 危険がないときの行動 ===== */
+  switch (enemyState) {
 
-  // ===== 逆方向禁止（弱め） =====
-  if (lastMove && dx === -lastMove.dx && dy === -lastMove.dy) {
-    const alternatives = DIRS
-      .map(([adx, ady]) => ({
-        x: enemy.x + adx,
-        y: enemy.y + ady,
-        dx: adx,
-        dy: ady,
-        dist:
-          Math.abs((enemy.x + adx) - currentTarget.x) +
-          Math.abs((enemy.y + ady) - currentTarget.y)
-      }))
-      .filter(p => canMove(p.x, p.y))
-      .sort((a, b) => a.dist - b.dist);
+    /* -------------------------
+       ① idle：壁を探す
+    ------------------------- */
+    case "idle":
+      currentWall = findAnyBreakableWall();
+      if (!currentWall) {
+        randomMove();
+        return;
+      }
 
-    if (alternatives.length > 0) {
-      const m = alternatives[0];
-      enemy.x = m.x;
-      enemy.y = m.y;
-      lastMove = { dx: m.dx, dy: m.dy };
+      currentTarget = findAdjacentTarget(currentWall);
+      if (!currentTarget) {
+        currentWall = null;
+        randomMove();
+        return;
+      }
+
+      enemyState = "moveToWall";
+      return;
+
+    /* -------------------------
+       ② 壁の隣へ移動
+    ------------------------- */
+    case "moveToWall": {
+      const path = findPath(enemy, currentTarget);
+
+      if (!path || path.length < 2) {
+        randomMove();
+        return;
+      }
+
+      const next = path[1];
+      if (canMove(next.x, next.y)) {
+        enemy.x = next.x;
+        enemy.y = next.y;
+      }
+
+      const dist =
+        Math.abs(enemy.x - currentWall.x) +
+        Math.abs(enemy.y - currentWall.y);
+
+      if (dist === 1) {
+        enemyState = "placeBomb";
+      }
+      return;
+    }
+
+    /* -------------------------
+       ③ 爆弾を置く
+    ------------------------- */
+    case "placeBomb":
+      if (!bombs.some(b => b.owner === "enemy")) {
+        bombs.push({ x: enemy.x, y: enemy.y, timer: 120, owner: "enemy" });
+      }
+
+      enemyState = "escape";
+      return;
+
+    /* -------------------------
+       ④ 爆風から逃げる
+    ------------------------- */
+    case "escape": {
+      const dangerNow = dangerTiles();
+
+      if (!dangerNow.has(`${enemy.x},${enemy.y}`)) {
+        enemyState = "wait";
+        enemyWaitTimer = 40; // ← 落ち着いて立ち止まる
+        return;
+      }
+
+      escapeFromDanger(dangerNow);
       return;
     }
   }
-
-  // ===== 正常に進む =====
-  if (canMove(next.x, next.y)) {
-    enemy.x = next.x;
-    enemy.y = next.y;
-    lastMove = { dx, dy };
-    return;
-  }
-
-  // ===== 最後の保険：ランダム移動 =====
-  randomMove();
 }
