@@ -19,7 +19,6 @@ body {
     z-index: 100;
 }
 
-/* ゲーム開始後に非表示にするためのクラス */
 #uiLayer.hidden {
     display: none;
 }
