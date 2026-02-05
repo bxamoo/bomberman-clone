@@ -84,29 +84,53 @@ function drawChar(px, py, color, outline) {
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
-  // 体
+  // 体（小さめ）
   ctx.fillStyle = color;
   ctx.strokeStyle = outline;
   ctx.lineWidth = 3;
 
   ctx.beginPath();
-  ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + 8, 10, 6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 白目
+  // 顔（大きめ）
+  ctx.beginPath();
+  ctx.arc(cx, cy - 2, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 目（白）
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.arc(cx - 5, cy - 3, 4, 0, Math.PI * 2);
-  ctx.arc(cx + 5, cy - 3, 4, 0, Math.PI * 2);
+  ctx.arc(cx - 4, cy - 4, 4, 0, Math.PI * 2);
+  ctx.arc(cx + 4, cy - 4, 4, 0, Math.PI * 2);
   ctx.fill();
 
   // 黒目
   ctx.fillStyle = "black";
   ctx.beginPath();
-  ctx.arc(cx - 5, cy - 3, 2, 0, Math.PI * 2);
-  ctx.arc(cx + 5, cy - 3, 2, 0, Math.PI * 2);
+  ctx.arc(cx - 4, cy - 4, 2, 0, Math.PI * 2);
+  ctx.arc(cx + 4, cy - 4, 2, 0, Math.PI * 2);
   ctx.fill();
+
+  // 手
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, cy + 4);
+  ctx.lineTo(cx - 16, cy + 4);
+  ctx.moveTo(cx + 10, cy + 4);
+  ctx.lineTo(cx + 16, cy + 4);
+  ctx.stroke();
+
+  // 足
+  ctx.beginPath();
+  ctx.moveTo(cx - 6, cy + 14);
+  ctx.lineTo(cx - 6, cy + 20);
+  ctx.moveTo(cx + 6, cy + 14);
+  ctx.lineTo(cx + 6, cy + 20);
+  ctx.stroke();
 }
 
 /* =========================================================
@@ -180,24 +204,31 @@ function drawItemFire(x, y) {
 
   ctx.fillStyle = bg;
   ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+
   ctx.strokeStyle = "#01579b";
   ctx.lineWidth = 2;
   ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8);
 
-  // 火の玉アイコン
+  // 丸っこい火の玉
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
   const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 12);
   g.addColorStop(0, "#fff6a0");
-  g.addColorStop(0.4, "#ffb300");
-  g.addColorStop(1, "#ff5e00");
+  g.addColorStop(0.3, "#ffd000");
+  g.addColorStop(0.7, "#ff7b00");
+  g.addColorStop(1, "#d84315");
 
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.moveTo(cx, cy - 10);
-  ctx.quadraticCurveTo(cx + 10, cy - 5, cx, cy + 10);
-  ctx.quadraticCurveTo(cx - 10, cy - 5, cx, cy - 10);
+  ctx.ellipse(cx, cy, 10, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 火の揺らぎ（ちょっとだけ尖らせる）
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 12);
+  ctx.quadraticCurveTo(cx + 6, cy - 6, cx, cy);
+  ctx.quadraticCurveTo(cx - 6, cy - 6, cx, cy - 12);
   ctx.fill();
 }
 
@@ -207,20 +238,21 @@ function drawItemBomb(x, y) {
 
   // 背景（緑の四角）
   const bg = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
-  bg.addColorStop(0, "#4caf50");
+  bg.addColorStop(0, "#66bb6a");
   bg.addColorStop(1, "#2e7d32");
 
   ctx.fillStyle = bg;
   ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+
   ctx.strokeStyle = "#1b5e20";
   ctx.lineWidth = 2;
   ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8);
 
-  // 爆弾アイコン（小さめ）
+  // 爆弾（本体）
   const cx = px + TILE / 2;
   const cy = py + TILE / 2;
 
-  const g = ctx.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, 10);
+  const g = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, 12);
   g.addColorStop(0, "#555");
   g.addColorStop(1, "#000");
 
@@ -232,7 +264,21 @@ function drawItemBomb(x, y) {
   // ハイライト
   ctx.fillStyle = "rgba(255,255,255,0.6)";
   ctx.beginPath();
-  ctx.ellipse(cx - 3, cy - 4, 3, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx - 3, cy - 5, 3, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 導火線
+  ctx.strokeStyle = "brown";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx + 6, cy - 6);
+  ctx.lineTo(cx + 12, cy - 12);
+  ctx.stroke();
+
+  // 火花
+  ctx.fillStyle = Math.random() < 0.5 ? "yellow" : "orange";
+  ctx.beginPath();
+  ctx.arc(cx + 12, cy - 12, 3, 0, Math.PI * 2);
   ctx.fill();
 }
 
