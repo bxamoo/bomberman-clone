@@ -5,8 +5,19 @@ function smoothMove(entity) {
   const targetX = entity.x * TILE;
   const targetY = entity.y * TILE;
 
-  entity.renderX += (targetX - entity.renderX) * 0.25;
-  entity.renderY += (targetY - entity.renderY) * 0.25;
+  const dx = targetX - entity.renderX;
+  const dy = targetY - entity.renderY;
+
+  // 横移動が大きい → 横だけ補間
+  if (Math.abs(dx) > Math.abs(dy)) {
+    entity.renderX += dx * 0.25;
+    entity.renderY = targetY; // ← Y は固定
+  }
+  // 縦移動が大きい → 縦だけ補間
+  else {
+    entity.renderY += dy * 0.25;
+    entity.renderX = targetX; // ← X は固定
+  }
 }
 
 /* =========================================================
